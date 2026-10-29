@@ -127,18 +127,18 @@ if (active && !printerName.trim()) {
 
 
 
-      console.log(
-        '[USB PRINTER] Saving settings:',
-        config
-      );
+      // console.log(
+      //   '[USB PRINTER] Saving settings:',
+      //   config
+      // );
 
       const result =
         await window.posApi.saveUsbPrinterSettings(config);
 
-      console.log(
-        '[USB PRINTER] Save result:',
-        result
-      );
+      // console.log(
+      //   '[USB PRINTER] Save result:',
+      //   result
+      // );
 
       if (result?.success) {
         setSaveMessage(

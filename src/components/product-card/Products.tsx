@@ -11,7 +11,7 @@ import { FAVORITES_CATEGORY_ID } from "../home/PosSidebarCategories";
 import { FiSearch, FiX } from "react-icons/fi";
 import { usePosSession } from "@/PosSessionStore/PosSessionContext";
 import { useToast } from '@/hooks/useToast';
-
+import Card from "./ProductCard-h1_1_1";
  
 
 export default function Products() {
@@ -177,80 +177,14 @@ const products = useMemo(() => {
     loadModifiers();
   }, []);
 
-  // =====================================================
-  // CARD COMPONENT
-  // =====================================================
+ 
 
-  const cardType =
-    process.env.NEXT_PUBLIC_PRODUCT_CARD_TYPE;
+ 
 
-  const Card = useMemo(() => {
-    switch (cardType) {
-      // case "1":
-      //   return dynamic(
-      //     () =>
-      //       import("../level-2/ProductCard-h1")
-      //   );
+ 
 
-      // case "11":
-      //   return dynamic(
-      //     () =>
-      //       import("../level-2/ProductCard-h1_1")
-      //   );
+  
 
-      case "111":
-        return dynamic(
-          () =>
-            import(
-              "./ProductCard-h1_1_1"
-            )
-        );
-
-      // case "2":
-      //   return dynamic(
-      //     () =>
-      //       import("../level-2/ProductCard-v2")
-      //   );
-
-      // default:
-      //   return dynamic(
-      //     () =>
-      //       import("../level-2/ProductCard-h1")
-      //   );
-    }
-  }, [cardType]);
-
-  // =====================================================
-  // CONTAINER CLASS
-  // =====================================================
-
-  let containerClass = "";
-
-  switch (cardType) {
-    case "1":
-      containerClass =
-        "flex flex-col justify-between md:flex-row md:flex-wrap";
-      break;
-
-    case "11":
-      containerClass =
-        "flex flex-col justify-between md:flex-row md:flex-wrap";
-      break;
-
-    case "12":
-      containerClass =
-        "flex flex-col justify-between md:flex-row md:flex-wrap";
-      break;
-
-    case "2":
-    case "3":
-      containerClass =
-        "flex flex-col md:flex-row justify-between md:flex-wrap justify-center";
-      break;
-
-    default:
-      containerClass = "flex flex-wrap";
-  }
 
   // =====================================================
   // SEARCH HANDLERS

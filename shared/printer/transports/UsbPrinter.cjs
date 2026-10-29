@@ -184,9 +184,9 @@ finally {
         }
       );
 
-      console.log(
-        `[USB PRINTER] RAW job submitted to "${printerName}"`
-      );
+      // console.log(
+      //   `[USB PRINTER] RAW job submitted to "${printerName}"`
+      // );
 
       return true;
     } catch (error) {

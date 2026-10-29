@@ -143,7 +143,7 @@ const { showToast, toastComponent } = useToast();
 
     name: product.name,
     categoryId: product.categoryId,
-
+    taxCategory: product.taxCategory,
     // FIX: always provide a string
     categoryName: product.productCat ?? '',
 

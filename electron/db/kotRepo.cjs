@@ -150,16 +150,16 @@ function createKot({
     throw new Error('KOT items are required');
   }
 
-  console.log('========== CREATE KOT: INCOMING ITEMS ==========');
+//   console.log('========== CREATE KOT: INCOMING ITEMS ==========');
 
-for (const item of items) {
-  console.log({
-    productId: item.productId,
-    name: item.name,
-    discountEligible: item.discountEligible,
-    type: typeof item.discountEligible,
-  });
-}
+// for (const item of items) {
+//   console.log({
+//     productId: item.productId,
+//     name: item.name,
+//     discountEligible: item.discountEligible,
+//     type: typeof item.discountEligible,
+//   });
+// }
 
  console.log('================================================');
   const transaction = db.transaction(() => {

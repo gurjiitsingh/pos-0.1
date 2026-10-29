@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS products (
   image TEXT,
 
   foodType TEXT,
+  taxCategory TEXT NOT NULL DEFAULT 'FOOD_GST',
 
   sortOrder INTEGER NOT NULL DEFAULT 0,
   kitchenPrintReq INTEGER,
@@ -51,7 +52,7 @@ CREATE TABLE IF NOT EXISTS products (
 
   parentId TEXT,
   baseProductId TEXT,
-discountEligible INTEGER NOT NULL DEFAULT 1,
+  discountEligible INTEGER NOT NULL DEFAULT 1,
   hasVariants INTEGER NOT NULL DEFAULT 0,
   hasModifiers INTEGER NOT NULL DEFAULT 0,
 
@@ -104,7 +105,7 @@ CREATE TABLE IF NOT EXISTS pos_cart_item (
   name TEXT NOT NULL,
   categoryId TEXT NOT NULL,
   categoryName TEXT NOT NULL,
-
+ taxCategory TEXT NOT NULL DEFAULT 'FOOD_GST',
   parentId TEXT,
   isVariant INTEGER NOT NULL,
 
@@ -220,6 +221,7 @@ CREATE TABLE IF NOT EXISTS pos_kot_items (
   id TEXT PRIMARY KEY,
   kotNumber TEXT NOT NULL,
   categoryName TEXT NOT NULL,
+   taxCategory TEXT NOT NULL DEFAULT 'FOOD_GST',
   productMode TEXT NOT NULL,
   currentStock REAL DEFAULT 0,
 
@@ -551,7 +553,7 @@ CREATE TABLE IF NOT EXISTS pos_bill_items (
   sessionId TEXT,
   tableNo TEXT,
   tableName TEXT,
-
+ taxCategory TEXT NOT NULL DEFAULT 'FOOD_GST',
   -- Product
   productId TEXT NOT NULL,
   name TEXT NOT NULL,

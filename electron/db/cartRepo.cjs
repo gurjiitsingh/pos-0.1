@@ -89,6 +89,7 @@ async function addCartItem(item, partition) {
       `INSERT INTO pos_cart_item (
         productId,
         productMode,
+        taxCategory,
         currentStock,
         name,
         categoryId,
@@ -114,12 +115,14 @@ async function addCartItem(item, partition) {
         printStatus,
         createdAt
       ) VALUES (
-        ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
+        ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
       )`
     ).run(
       productId,
 
       item.productMode || 'raw_stock',
+
+      item.taxCategory || 'FOOD_GST',
 
       item.currentStock || 0,
 

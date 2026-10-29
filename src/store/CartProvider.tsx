@@ -188,7 +188,7 @@ export const CartProvider: React.FC<Props> = ({ children }) => {
 
         productId: newProduct.productId,
         productMode: newProduct.productMode,
-
+        taxCategory:newProduct.taxCategory,
         currentStock: newProduct.currentStock ?? 0,
 
         name: newProduct.name,

@@ -98,11 +98,11 @@ class PrintManager {
 
 async handleJob(job) {
 
-    console.log('[PRINT JOB] Started:', {
-        id: job.id,
-        role: job.role,
-        source: job.source,
-    });
+    // console.log('[PRINT JOB] Started:', {
+    //     id: job.id,
+    //     role: job.role,
+    //     source: job.source,
+    // });
 
     // REPORT uses BILL printer settings, but keeps REPORT formatting.
     const printerRole =
@@ -110,16 +110,16 @@ async handleJob(job) {
 
     const config = this.settingsRepo.getConfig(printerRole);
 
-    console.log('[PRINT JOB] Printer config:', {
-        requestedRole: job.role,
-        printerRole,
-        configFound: Boolean(config),
-        active: config?.active,
-        connectionType: config?.connectionType,
-        printerName: config?.printerName,
-        renderMode: config?.renderMode,
-        paperSize: config?.paperSize,
-    });
+    // console.log('[PRINT JOB] Printer config:', {
+    //     requestedRole: job.role,
+    //     printerRole,
+    //     configFound: Boolean(config),
+    //     active: config?.active,
+    //     connectionType: config?.connectionType,
+    //     printerName: config?.printerName,
+    //     renderMode: config?.renderMode,
+    //     paperSize: config?.paperSize,
+    // });
 
     if (!config) {
         throw new Error(
@@ -127,24 +127,24 @@ async handleJob(job) {
         );
     }
 
-    if (config.connectionType === 'USB') {
-        console.log('[PRINT JOB] USB target printer:', config.printerName);
-    }
+    // if (config.connectionType === 'USB') {
+    //     console.log('[PRINT JOB] USB target printer:', config.printerName);
+    // }
 
     // =====================================================
     // TEXT PRINTING
     // =====================================================
     if (config.renderMode === ReceiptRenderMode.TEXT) {
-      console.log('[PRINT JOB] Creating formatter:', job.role);
+    //  console.log('[PRINT JOB] Creating formatter:', job.role);
 
       const formatter = FormatterFactory.create(
         job.role,
         config.paperSize
       );
 
-      console.log('[PRINT JOB] Formatter created:', {
-        formatter: formatter?.constructor?.name,
-      });
+      // console.log('[PRINT JOB] Formatter created:', {
+      //   formatter: formatter?.constructor?.name,
+      // });
 
       const outletInfo =
         job.data?.outletInfo || outletRepo.getOutlet() || {};
@@ -154,16 +154,18 @@ async handleJob(job) {
         outletInfo,
       };
 
-      console.log('[PRINT JOB] Formatting data:', {
-        role: job.role,
-        reportTitle: printData.reportTitle,
-        businessDate: printData.businessDate,
-      });
+      // console.log('[PRINT JOB] Formatting data:', {
+      //   role: job.role,
+      //   reportTitle: printData.reportTitle,
+      //   businessDate: printData.businessDate,
+      // });
 
       const output = formatter.format(
         printData,
         config.paperSize
       );
+
+      console.log(output);
 
       if (typeof output !== 'string' || !output.trim()) {
         throw new Error(
@@ -171,23 +173,23 @@ async handleJob(job) {
         );
       }
 
-      console.log('[PRINT JOB] Formatted output:', {
-        length: output.length,
-        preview: output.slice(0, 300),
-      });
+      // console.log('[PRINT JOB] Formatted output:', {
+      //   length: output.length,
+      //   preview: output.slice(0, 300),
+      // });
 
       const transport = TransportFactory.create(config);
 
-      console.log('[PRINT JOB] Transport created:', {
-        transport: transport?.constructor?.name,
-      });
+      // console.log('[PRINT JOB] Transport created:', {
+      //   transport: transport?.constructor?.name,
+      // });
 
       const ok = await transport.printText(config, output);
 
-      console.log('[PRINT JOB] Transport result:', {
-        role: job.role,
-        ok,
-      });
+      // console.log('[PRINT JOB] Transport result:', {
+      //   role: job.role,
+      //   ok,
+      // });
 
       if (!ok) {
         throw new Error(
@@ -195,10 +197,10 @@ async handleJob(job) {
         );
       }
 
-      console.log('[PRINT JOB] Completed:', {
-        role: job.role,
-        id: job.id,
-      });
+      // console.log('[PRINT JOB] Completed:', {
+      //   role: job.role,
+      //   id: job.id,
+      // });
 
       return;
     }

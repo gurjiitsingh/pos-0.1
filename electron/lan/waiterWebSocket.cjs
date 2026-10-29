@@ -61,7 +61,7 @@ function startWaiterWebSocketServer() {
   // });
 
   wss.on("connection", (socket) => {
-    console.log("[WAITER WS] Android connected");
+   // console.log("[WAITER WS] Android connected");
 
     // Send current data immediately to a newly connected device.
     try {

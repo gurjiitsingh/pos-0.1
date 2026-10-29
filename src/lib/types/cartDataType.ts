@@ -20,7 +20,7 @@ export type cartProductType = {
 
   productId: string;
   productMode: string;
-
+taxCategory: string | null;
   currentStock: number;
 
   name: string;

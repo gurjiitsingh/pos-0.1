@@ -508,12 +508,12 @@ ipcMain.handle(
 
       const savedConfig = printerSettingsRepo.saveConfig(usbConfig);
 
-      console.log('[USB PRINTER] Saved:', {
-        role: savedConfig.role,
-        connectionType: savedConfig.connectionType,
-        active: savedConfig.active,
-        printerName: savedConfig.printerName,
-      });
+      // console.log('[USB PRINTER] Saved:', {
+      //   role: savedConfig.role,
+      //   connectionType: savedConfig.connectionType,
+      //   active: savedConfig.active,
+      //   printerName: savedConfig.printerName,
+      // });
 
       return {
         success: true,
@@ -1549,14 +1549,14 @@ ipcMain.handle(
 ipcMain.handle(
   'cart:add',
   async (_e, item, tableNo) => {
-    console.log('\n========== CART ADD: BEFORE SQLITE SAVE ==========');
-    console.log({
-      productId: item?.productId,
-      name: item?.name,
-      kitchenPrintReq: item?.kitchenPrintReq,
-      type: typeof item?.kitchenPrintReq,
-      tableNo,
-    });
+    // console.log('\n========== CART ADD: BEFORE SQLITE SAVE ==========');
+    // console.log({
+    //   productId: item?.productId,
+    //   name: item?.name,
+    //   kitchenPrintReq: item?.kitchenPrintReq,
+    //   type: typeof item?.kitchenPrintReq,
+    //   tableNo,
+    // });
 
     const result =
       await cartRepo.addCartItem(
@@ -1564,8 +1564,8 @@ ipcMain.handle(
         tableNo
       );
 
-    console.log('\n========== CART ADD: AFTER SQLITE SAVE ==========');
-    console.log('Repository result:', result);
+    // console.log('\n========== CART ADD: AFTER SQLITE SAVE ==========');
+    // console.log('Repository result:', result);
 
     tableRepo.refreshAllTableCartVisualStates();
 
@@ -2508,7 +2508,7 @@ let nextServer = null;
 function startNextServer() {
   if (!app.isPackaged) {
     console.log(
-      'Development mode: Next.js runs on localhost:3000'
+      'Development mode: Next.js runs on localhost:3003'
     );
     return;
   }
@@ -2589,7 +2589,7 @@ function startNextServer() {
         ELECTRON_RUN_AS_NODE: '1',
 
         NODE_ENV: 'production',
-        PORT: '3000',
+        PORT: '3003',
         HOSTNAME: '127.0.0.1',
       },
 
@@ -2656,8 +2656,8 @@ function createWindow() {
   const isDev = !app.isPackaged;
 
   const targetUrl = isDev
-    ? "http://localhost:3000"
-    : "http://127.0.0.1:3000";
+    ? "http://localhost:3003"
+    : "http://127.0.0.1:3003";
 
   const win = new BrowserWindow({
     width: 1400,
@@ -2806,7 +2806,7 @@ if (app.isPackaged) {
     startNextServer();
 
     await waitForNextServer(
-      "http://127.0.0.1:3000",
+      "http://127.0.0.1:3003",
       30000
     );
 

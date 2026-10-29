@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "eslint",
     "electron": "electron .",
-    "electron-dev": "concurrently \"next dev\" \"wait-on http://localhost:3000 && electron .\"",
+    "electron-dev": "concurrently \"next dev -p 3003\" \"wait-on http://localhost:3003 && electron .\"",
     "electron-build": "next build && node scripts/prepare-next-standalone.cjs && electron-builder",
     "electron-dist": "next build && node scripts/prepare-next-standalone.cjs && electron-builder --win"
   },
