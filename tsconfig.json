@@ -1,0 +1,46 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "src/app/(universal)/(purchase)/pay/components/Checkout.js",
+    "next-auth.d.ts",
+    "src/app/level-1/CategorySlider.js",
+    "src/components/Bargermenu/Menu.tsx",
+    "src/app/(universal)/admin/orders-old/order-detail/components/productList.js",
+    ".next/dev/types/**/*.ts"
+, "src/app/(universal)/action/schedule/saveDaySchedule", "src/app/(universal)/action/schedule/saveDaySchedule", "shared/printer/PrintManager.cjs", "shared/printer/PrinterSettingsRepository.cjs", "shared/printer/formatters/FormatterFactory.cjs", "shared/printer/formatters/IReceiptFormatter.ts", "shared/printer/transports/LanPrinter.cjs", "shared/printer/formatters/KitchenFormatter80.cjs", "shared/printer/formatters/KitchenFormatter58.cjs", "shared/printer/transports/TransportFactory.cjs", "shared/printer/types.ts", "src/components/MiniCart/SideCart.js", "electron/lan/lanBroadcaster.cjs"  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

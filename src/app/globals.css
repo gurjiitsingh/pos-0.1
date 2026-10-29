@@ -1,0 +1,476 @@
+@import "tailwindcss";
+
+/* text-[#64870d] */
+/* text-emerald-800 */
+
+.input-style-4 {
+  @apply w-full rounded-xl border border-gray-200 bg-white px-3 py-2
+  text-sm outline-none transition-all
+  focus:ring-2 focus:ring-rose-200
+  focus:border-rose-300;
+}
+
+.label-style-4 {
+  @apply text-sm font-medium text-gray-700;
+}
+
+.textarea-style-4 {
+  @apply w-full rounded-xl border border-gray-200 bg-white px-3 py-2
+  text-sm outline-none transition-all min-h-[100px]
+  focus:ring-2 focus:ring-rose-200
+  focus:border-rose-300;
+}
+
+.btn-save-4 {
+  @apply bg-rose-600 hover:bg-rose-700
+  text-white rounded-xl px-4 py-2
+  font-medium transition-all shadow-sm;
+}
+
+
+.input-style1 {
+  @apply border border-slate-300 rounded focus:outline-none py-[.5rem] px-1 text-slate-700 text-[.8rem];
+}
+.input-style {
+  @apply w-full border-slate-300 border px-1 py-[.1rem] rounded-lg  outline-none text-slate-800 text-[1rem];
+}   
+.input-style2 {
+  @apply border border-gray-300 rounded-lg px-4 py-1 focus:outline-none focus:ring-2 focus:ring-[#64870d];
+} 
+
+
+.label-style{
+  @apply text-gray-500  text-xs;
+}
+.textarea-style {
+  @apply w-full border border-slate-300 px-4 py-1 rounded-lg  outline-none text-slate-700;
+}        
+.input-image-style{
+@apply text-sm border border-slate-300 rounded
+}
+.seach-form{
+  @apply text-sm border border-slate-300 rounded-full p-1
+}
+.mp{
+  @apply px-32 py-32;
+}
+.primary{
+  @apply bg-[#FADB5E];
+}
+.light-bg{
+  @apply bg-slate-100;
+}
+.dim{
+  @apply bg-blue-400;
+}
+.form-btn-color{
+  @apply bg-amber-400
+}
+.form-btn-style{
+  @apply bg-red-500 rounded-xl w-fit px-3 py-1 text-white
+}
+.form-btn{
+  @apply bg-red-500 rounded-xl w-fit px-3 py-1 text-white
+}
+
+.bg-dark{
+  @apply bg-[#64870d]
+}
+.text-dark{
+   @apply text-[#64870d]
+}
+
+
+/* side bar */
+
+
+/* 🦚 Elegant Teal Theme */
+
+.sb-bg {
+  @apply bg-[#121C1B]; /* Very dark teal slate background */
+}
+
+.sb-tab {
+  @apply text-slate-300 hover:bg-[#1C2B29]; /* Soft slate hover */
+}
+
+.sb-tab-active {
+  @apply bg-[#00897B] text-white shadow-md; /* Main active tab color */
+}
+
+.sb-btn {
+  @apply bg-[#00897B] text-white hover:bg-[#00695C]; /* Main button */
+}
+
+.sb-btn-outline {
+  @apply border border-[#00897B] text-[#00897B] hover:bg-[#00897B] hover:text-white;
+}
+
+.sb-header {
+  @apply text-[#00BFA5]; /* Highlight teal tone for headers */
+}
+
+
+
+
+/* #F2F0EC; */
+/* bg-gradient-to-bl from-[#ffe4e6]  to-[#ccfbf1]  */
+:root {
+  --background: #fff;
+  --foreground: #171717;
+}
+
+/* @media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+} */
+
+/* @media (prefers-color-scheme: dark) {
+  body {
+    background-color: white !important;
+    color: black !important;
+  }
+} */
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+
+/* HEOR */
+
+.img-rotate-10 {
+  @apply md:rotate-[10deg];
+}
+
+@media (max-width: 1020px) {
+  .padd-h {
+    @apply px-3;
+  }
+}
+.padd-h {
+  @apply px-[1.2rem];
+}
+
+
+
+/* @media (max-width: 1020px) {
+  .modul-img {
+    @apply mt-[-50%] order-1 translate-x-[-2rem] translate-y-[-10%];
+  }
+}
+@media (max-width: 1020px) {
+  .hero-module_hero__k4wsZ.imgPos-left .modul-img,
+  .hero-module_hero__k4wsZ.imgPos-right .modul-img {
+    @apply shrink-0 static translate-x-[-4rem] w-[calc(100%_+_8rem)];
+  }
+} */
+.modul-img {
+  @apply md:translate-x-32 md:translate-y-16 md:left-2/4  md:top-0;
+}
+.modul-img {
+  @apply shrink-0 absolute;
+}
+ .modul-info,
+ .modul-img {
+  @apply order-2;
+} 
+
+.slick-arrow{
+  background-color: #aaa !important;
+  border-radius: 100%;
+  padding-top:2px !important;
+  z-index: 9999;
+  height: 40px !important;
+  width: 40px !important;
+  opacity: .7;
+  z-index: 1 !important;
+} 
+.slick-prev{
+margin-right: -300px;
+}
+
+ .slick-next{
+margin-left: -400px !important;
+
+}
+
+.checkout{
+  z-index: 0 !important;
+  background-color: #aaa;
+  border-radius: 20px;
+  padding: 30px;
+}
+
+button:disabled {
+  background-color: #ccc;
+  color: #666;
+  cursor: not-allowed;
+}
+
+
+/* === Layout Colors === */
+.layout-bg {
+  @apply bg-[#d4eebe];
+  /* bg-gradient-to-t from-rose-50 to-slate-100  */
+  /* bg-gradient-to-r from-[#FFFFFF] to-[#FAFAFA]; */
+  /* bg-gradient-to-r from-[#FAFEFF] to-[#F0FCFF]; */
+  /* bg-gradient-to-r from-[#FFFFFB] to-[#FFFEEB]; */
+  /* bg-gradient-to-r from-[#FAFFFB] to-[#F3FFF9]; */
+  /* bg-gradient-to-r from-[#F9FAFB] to-[#F3F4F6]; */
+  /* bg-gradient-to-r from-[#E8F5E9] to-[#E0F7FA]; */
+  /* bg-gradient-to-r from-[#FFF8E1] to-[#FFE0B2]; */
+  /* bg-gradient-to-r from-[#FFFDE1] to-[#E0F7FA]; */
+  /* bg-gradient-to-r from-[#555555] to-[#111111] */
+  /* bg-gradient-to-r from-[#555555] to-[#111111] */
+}
+
+/* cart */
+.cart-bg {
+  @apply bg-[#A2AF9B]
+}
+
+/* Nav bar */
+
+.header-bg {
+  @apply 
+  /* bg-[#64870d]; */
+  /* bg-[#FE8B2E]; */
+    bg-[#E9E9E9]
+   /* bg-[#EDE8DC] */
+  /* bg-[#FE8B2E]; */
+  text-slate-600
+}
+
+
+
+.header-shadow {
+  @apply shadow-md;
+}
+
+.header-opacity {
+  @apply opacity-70;
+}
+
+.header-rounded {
+  @apply rounded-xl;
+}
+
+.header-toggle-hover {
+  @apply hover:bg-gray-100 focus:outline-none;
+}
+
+
+
+
+/* Footer background colors */
+.footer-bg-primary {
+  @apply bg-[#563419] text-slate-50;; /*bg-[#FADB5E]; /* Original: #FADB5E */
+}
+
+.footer-bg-bottom {
+   @apply bg-slate-700;/*  bg-[#64870d]; * Original: #64870d */
+}
+
+/* Footer card background and border */
+.footer-box-bg {
+  @apply bg-amber-200; /* Original: Tailwind amber-200 */
+}
+
+.footer-border {
+  @apply border border-amber-50; /* Original: Tailwind amber-50 */
+}
+
+/* Text colors */
+.footer-text {
+  @apply text-slate-700;
+}
+
+.footer-text-light {
+  @apply text-slate-100;
+}
+
+/* Border bottom for list items */
+.footer-item-border {
+  @apply border-b border-slate-400;
+}
+
+
+/* Products */
+.product-card-bg{
+  @apply bg-zinc-50
+}
+
+.product-card-add-button-cover-1{
+  @apply text-slate-500 bg-[#FADB5E]
+}
+
+.product-card-add-title-cover-1{
+  @apply bg-[#64870d] text-white flex items-center justify-center text-nowrap text-center px-2 py-1  min-w-[180px]  rounded-3xl
+}
+
+
+/* === Title Component Styles === */
+
+.text-brand-heading {
+  @apply text-[#496208];
+}
+
+.text-brand-subheading {
+  @apply text-xl text-[#496208]; 
+}
+
+
+/* === Hero Text === */
+.hero-heading {
+  @apply text-2xl w-fit my-2 text-zinc-400;
+}
+
+.hero-subtext {
+  @apply text-xl;
+}
+
+.hero-delivery-note {
+  @apply p-1 text-slate-600 border border-slate-200 w-fit h-fit font-semibold rounded-xl mb-1;
+}
+
+.hero-disclaimer {
+  @apply text-sm text-slate-500;
+}
+
+
+/* === Toast Styles === */
+.toast-default {
+  @apply bg-slate-800 text-slate-50;
+}
+
+.toast-success {
+  @apply bg-emerald-500 text-white;
+}
+
+.toast-error {
+  @apply bg-red-500 text-white;
+}
+
+.toast-loading {
+  @apply bg-amber-500 text-white;
+}
+
+
+
+/* Hide scrollbar for navigation (optional) */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+
+
+/* category product slider */
+/*  Add this to your globals.css */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+
+/* SlidersByCatId -- ProductSlider */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+
+
+
+/* Reusable Save Button Style */
+.btn-save1 {
+  @apply bg-amber-500 text-white font-bold text-lg py-2 px-6 rounded-xl shadow-md 
+         hover:bg-amber-600 hover:shadow-lg transition-all duration-200 
+         active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed;
+}
+/* Reusable Save Button Style */
+.btn-save1 {
+  @apply bg-amber-500 text-white font-bold text-lg py-2 px-6 rounded-xl shadow-md 
+         hover:bg-amber-600 hover:shadow-lg transition-all duration-200 
+         active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed;
+}
+
+
+.btn-save {
+  @apply bg-gradient-to-r from-amber-500 to-orange-600 
+         text-white font-semibold text-lg tracking-wide
+         py-2.5 px-8 rounded-xl shadow-md 
+         transition-all duration-300 ease-out
+         hover:from-orange-500 hover:to-amber-600 
+         hover:shadow-lg active:scale-95;
+}
+
+/* When disabled or loading */
+.btn-save:disabled {
+  @apply opacity-70 cursor-not-allowed bg-gradient-to-r from-gray-400 to-gray-500;
+}
+
+
+
+.input-light {
+  @apply w-full rounded-md border border-gray-200 bg-white px-3 py-2 
+  text-sm text-gray-800 placeholder-gray-400 
+  focus:outline-none focus:ring-1 focus:ring-gray-300 focus:border-gray-300;
+}
+
+.label-light {
+  @apply text-xs text-gray-600 font-medium ;
+}
+
+
+
+
+/* Desktop-like scrollbar */
+.app-scrollbar {
+  scrollbar-width: thin;                 /* Firefox */
+  scrollbar-color: #c1c7d0 transparent; /* thumb track */
+}
+
+/* Chrome / Edge / Electron */
+.app-scrollbar::-webkit-scrollbar {
+  width: 10px;
+}
+
+.app-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.app-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #c1c7d0;
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.app-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #9aa4b2;
+}
+
+.app-scrollbar::-webkit-scrollbar-corner {
+  background: transparent;
+}

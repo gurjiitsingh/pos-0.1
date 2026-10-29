@@ -1,0 +1,26 @@
+to run 
+
+firebase deploy --only firestore
+
+
+
+// {
+//   "indexes": [
+//     {
+//       "collectionGroup": "products",
+//       "queryScope": "COLLECTION",
+//       "fields": [
+//         { "fieldPath": "categoryId", "order": "ASCENDING" },
+//         { "fieldPath": "createdAt", "order": "ASCENDING" }
+//       ]
+//     },
+//     {
+//       "collectionGroup": "inventoryItems",
+//       "queryScope": "COLLECTION",
+//       "fields": [
+//         { "fieldPath": "categoryId", "order": "ASCENDING" },
+//         { "fieldPath": "createdAt", "order": "ASCENDING" }
+//       ]
+//     }
+//   ]
+// }

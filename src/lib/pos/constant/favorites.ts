@@ -1,0 +1,1 @@
+export const FAVORITES_CATEGORY_ID = "__FAVORITES__";
