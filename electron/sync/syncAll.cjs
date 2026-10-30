@@ -87,6 +87,7 @@ async function syncAll() {
 
     const {
       syncOrderCounter,
+      syncLiquorVatOrderCounter,
     } = require("./orderCounterSync.cjs");
 
     const {
@@ -144,6 +145,11 @@ async function syncAll() {
       "ORDER COUNTER",
       syncOrderCounter
     );
+
+    await runStep(
+  "LIQUOR VAT ORDER COUNTER",
+  syncLiquorVatOrderCounter
+);
 
 
     console.log("\n==============================");

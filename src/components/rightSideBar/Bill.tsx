@@ -2109,25 +2109,103 @@ async function printRegularBill(regularItems: typeof billItems) {
     throw new Error('Invoice number not reserved for this table.');
   }
 
-  const actualBillNo = numberResult.srno;
-  await printBillItems(regularItems, actualBillNo);
+  const actualBillNo = String(numberResult.srno);
+   const billType = 'GST';
+  await printBillItems(regularItems, actualBillNo, billType);
 }
 
 async function printLiquorVatBill(liquorItems: typeof billItems) {
   if (liquorItems.length === 0) return;
 
     const numberResult =
-    await window.posApi.getOrCreateOrderNo_Liquer(currentTableId);
+    await window.posApi.getOrCreateLiquorVatOrderNo(currentTableId);
 
-  if (!numberResult?.success || !numberResult.srno) {
-    throw new Error('Invoice number not reserved for this table.');
-  }
-
-  const actualBillNo = numberResult.srno;
-  await printBillItems(liquorItems, actualBillNo);
+if (!numberResult?.success || !numberResult.srno) {
+  throw new Error(
+    numberResult?.error || 'Liquor VAT invoice number not reserved.'
+  );
 }
 
-async function printBillItems(items: typeof billItems,actualBillNo) {
+  const actualBillNo = String(numberResult.srno);
+  const billType = 'LIQUOR_VAT'
+  await printBillItems(liquorItems, actualBillNo, billType);
+}
+
+
+async function printBillItems(
+  items: typeof billItems,
+  actualBillNo: string,
+  billType: 'GST' | 'LIQUOR_VAT'
+) {
+  const itemSubtotal = items.reduce((total, i) => {
+    const price =
+      Number(i.basePrice || 0) +
+      Number(i.modifierTotal || 0);
+
+    const quantity = Number(i.quantity || 0);
+
+    return total + price * quantity;
+  }, 0);
+
+  const receiptData = {
+    billNo: actualBillNo,
+    billType,
+
+    orderNo: '',
+    tableNo: currentTableId,
+    tableName: currentTableName,
+    orderType: currentOrderType,
+    paymentMode,
+    createdAt: Date.now(),
+
+    items: items.map((i) => {
+      const price =
+        Number(i.basePrice || 0) +
+        Number(i.modifierTotal || 0);
+
+      const quantity = Number(i.quantity || 0);
+
+      return {
+        name: i.name,
+        quantity,
+        price,
+        subtotal: price * quantity,
+        modifiersJson: i.modifiersJson || '',
+        note: i.note || '',
+      };
+    }),
+
+    subtotal: itemSubtotal,
+    tax: 0,
+    discount: 0,
+    deliveryFee: 0,
+    deliveryTax: 0,
+    grandTotal: itemSubtotal,
+
+    customerName,
+    customerPhone,
+    kotNumberText: '',
+    stewardName: '',
+  };
+
+  console.log(`PRINTING ${billType} BILL:`, {
+    billNo: actualBillNo,
+    items: items.map((i) => i.name),
+    subtotal: itemSubtotal,
+  });
+
+  const res = await window.posApi.print({
+    role: 'BILL',
+    source: 'POS',
+    data: receiptData,
+  });
+
+  if (!res.success) {
+    throw new Error(res.error || `${billType} print failed`);
+  }
+}
+
+async function printBillItems_old(items: typeof billItems,actualBillNo) {
 
   // Keep your existing receiptData creation here.
   const itemSubtotal = items.reduce((total, i) => {

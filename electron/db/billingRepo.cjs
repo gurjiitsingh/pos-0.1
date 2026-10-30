@@ -10,6 +10,7 @@ const {
   getOrCreateOrderNo,
   attachOrderId,
   clearMapping,
+  clearLiquorVatMapping,
 } = require('../lib/orderSequenceRepository.cjs');
 
 const {
@@ -1258,6 +1259,10 @@ async function createBillFromKitchen(input) {
       // =================================================
 
       clearMapping(
+        db,
+        tableNo
+      );
+      clearLiquorVatMapping(
         db,
         tableNo
       );
@@ -2765,7 +2770,10 @@ async function cancelBillFromKitchen(input) {
         db,
         tableNo
       );
-
+    clearLiquorVatMapping(
+        db,
+        tableNo
+      );
 
       // =================================================
       // 5. COMPLETE KOT

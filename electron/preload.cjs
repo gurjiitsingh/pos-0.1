@@ -331,7 +331,7 @@ getDeletedKotHistoryItems: (selectedDate) =>
       input
     ),
 
-    // =====================================================
+// =====================================================
 // GET OR CREATE PRINT ORDER NUMBER
 // =====================================================
 
@@ -340,6 +340,14 @@ getOrCreateOrderNo: (tableNo) =>
     'bill:getOrCreateOrderNo',
     tableNo
   ),
+
+  getOrCreateLiquorVatOrderNo: (tableNo) =>
+  ipcRenderer.invoke(
+    'bill:getOrCreateLiquorVatOrderNo',
+    tableNo
+  ),
+
+  
 
     getReservedOrderNo: (tableNo) =>
   ipcRenderer.invoke('bill:getReservedOrderNo', tableNo),

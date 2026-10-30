@@ -715,6 +715,15 @@ saveUsbPrinterSettings: (config: {
       }>;
 
 
+      getOrCreateLiquorVatOrderNo: (
+        currentTableId: string
+      ) => Promise<{
+        success: boolean;
+        srno?: string | number;
+        error?: string;
+      }>;
+
+
 moveFullTableToTable: (params: {
   sourceTableNo: string;
   sourceTableName: string;

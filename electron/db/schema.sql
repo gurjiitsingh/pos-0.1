@@ -1143,8 +1143,63 @@ ON order_serial_map(srno);
 
 
 
+-- =====================================================
+-- LIQUOR VAT ORDER SERIAL MAP
+-- =====================================================
+
+CREATE TABLE IF NOT EXISTS liquor_vat_order_serial_map (
+  mapKey TEXT PRIMARY KEY,
+
+  orderId TEXT,
+
+  orderSerialNo INTEGER NOT NULL,
+
+  srno TEXT NOT NULL,
+
+  createdAt INTEGER NOT NULL
+);
 
 
+-- =====================================================
+-- LIQUOR VAT ORDER SERIAL MAP INDEXES
+-- =====================================================
+
+CREATE INDEX IF NOT EXISTS idx_liquor_vat_order_serial_map_orderId
+ON liquor_vat_order_serial_map(orderId);
+
+CREATE INDEX IF NOT EXISTS idx_liquor_vat_order_serial_map_srno
+ON liquor_vat_order_serial_map(srno);
+
+
+
+
+-- =====================================================
+-- LIQUOR VAT ORDER COUNTER
+-- =====================================================
+
+CREATE TABLE IF NOT EXISTS liquor_vat_order_counter (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+
+  invoiceSerialNo INTEGER NOT NULL DEFAULT 0,
+
+  updatedAt INTEGER NOT NULL
+);
+
+
+-- =====================================================
+-- ENSURE SINGLE COUNTER ROW EXISTS
+-- =====================================================
+
+INSERT OR IGNORE INTO liquor_vat_order_counter (
+  id,
+  invoiceSerialNo,
+  updatedAt
+)
+VALUES (
+  1,
+  0,
+  strftime('%s', 'now') * 1000
+);
 -- =====================================================
 -- BUSINESS DAY
 -- =====================================================

@@ -29,6 +29,7 @@ const {
 const {
   getOrCreateOrderNo,
   getExistingOrderNo,
+  getOrCreateLiquorVatOrderNo,
 } = require('./lib/orderSequenceRepository.cjs');
 const {
   TERMINAL_CODE,
@@ -1029,6 +1030,7 @@ ipcMain.handle(
   // =====================================================
   // RESERVE / GET PRINT ORDER NUMBER
   // =====================================================
+  
 
   ipcMain.handle(
     'bill:getOrCreateOrderNo',
@@ -1046,6 +1048,49 @@ ipcMain.handle(
         }
 
         const mapping = getOrCreateOrderNo(
+          db,
+          String(tableNo),
+          TERMINAL_CODE
+        );
+
+        return {
+          success: true,
+          srno: mapping.srno,
+          orderSerialNo: mapping.orderSerialNo,
+          mapKey: mapping.mapKey,
+        };
+      } catch (error) {
+        console.error(
+          '[BILL] Failed to reserve order number:',
+          error
+        );
+
+        return {
+          success: false,
+          error:
+            error?.message ||
+            'Failed to generate order number',
+        };
+      }
+    }
+  );
+
+    ipcMain.handle(
+    'bill:getOrCreateLiquorVatOrderNo',
+    async (_event, tableNo) => {
+      try {
+        if (
+          tableNo === undefined ||
+          tableNo === null ||
+          String(tableNo).trim() === ''
+        ) {
+          return {
+            success: false,
+            error: 'tableNo is required',
+          };
+        }
+
+        const mapping = getOrCreateLiquorVatOrderNo(
           db,
           String(tableNo),
           TERMINAL_CODE
