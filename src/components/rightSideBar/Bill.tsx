@@ -684,289 +684,153 @@ const { showToast, toastComponent } = useToast();
   // FINALIZE BILL
   // =====================================================
 
-  async function handleCheckout(
-    selectedPaymentMode:
-      'CASH'
-      | 'CARD'
-      | 'UPI'
-      | 'CANCEL',
-  ) {
-
-    if (processing) {
-      return;
-    }
-
-
-    if (billItems.length === 0) {
-
-      setError(
-        'No items in bill'
-      );
-
-      return;
-    }
-
-
-    if (!currentTableId) {
-
-      setError(
-        'No table selected'
-      );
-
-      return;
-    }
-
-
-    try {
-
-      setProcessing(true);
-
-      setError(null);
-
-
-      // =================================================
-      // 1. CALCULATE FINAL TOTAL
-      // =================================================
-
-      const totalAmount =
-        Number(
-          calculation.grandTotal
-        ) || 0;
-
-
-
-
-
-      // =================================================
-      // 2. CREATE BILL
-      // =================================================
-
-      const result =
-        await window.posApi.createBill({
-
-          tableNo:
-            currentTableId,
-
-          tableName:
-            currentTableName,
-
-          orderType:
-            currentOrderType,
-
-          customerName:
-            customerName.trim() ||
-            'Customer',
-
-          customerPhone:
-            customerPhone.trim(),
-
-          discountTotal:
-            calculation.discount,
-
-          deliveryFee:
-            calculation.deliveryFee,
-
-          deliveryTax:
-            calculation.deliveryTax,
-
-
-          // =============================================
-          // USER SNAPSHOT
-          // =============================================
-
-
-
-          finalizedById:
-            currentUser?.userId || '',
-
-          finalizedByName:
-            currentUser?.fullName || '',
-
-
-          // =============================================
-          // PAYMENT
-          // =============================================
-
-          paymentMode:
-            selectedPaymentMode,
-
-          paymentStatus:
-            'PAID',
-
-          paidAmount:
-            totalAmount,
-
-          payments: [
-
-            {
-              mode:
-                selectedPaymentMode,
-
-              amount:
-                totalAmount,
-            },
-
-          ],
-
-
-          // =============================================
-          // DEVICE
-          // =============================================
-
-          deviceId:
-            'POS',
-
-          deviceName:
-            'Electron POS',
-
-          appVersion:
-            '1.0',
-
-
-          // =============================================
-          // DATE
-          // =============================================
-
-          businessDate:
-            new Date()
-              .toISOString()
-              .slice(0, 10),
-
-
-          currency:
-            '₹',
-        });
-
-
-      // =================================================
-      // 3. CHECK BILL RESULT
-      // =================================================
-
-      if (!result.success) {
-
-        throw new Error(
-          result.error ||
-          'Failed to create bill'
-        );
-      }
-
-
-      // =================================================
-      // 4. MARK KOT HISTORY
-      //
-      // IMPORTANT:
-      //
-      // We do NOT provide kotHistoryId.
-      //
-      // Repository finds all KOT histories
-      // belonging to currentTableId.
-      //
-      // ================================================
-
-      const kotResult =
-        await window.posApi.markTableHistoryPaid({
-
-          tableNo:
-            currentTableId,
-
-          billItems:
-            billItems,
-
-          orderId:
-            result.srno || "",
-
-
-        });
-
-
-
-
-
-
-      if (!kotResult.success) {
-
-        throw new Error(
-          kotResult.error ||
-          'Failed to update KOT history'
-        );
-      }
-
-
-      // =================================================
-      // 5. RESET BILL DRAFT
-      // =================================================
-
-      setBillDraft({
-
-        customerName:
-          'Customer',
-
-        customerPhone:
-          '',
-
-        discount:
-          0,
-
-        discountPercent:
-          0,
-
-        deliveryFee:
-          0,
-
-        paymentMode:
-          'CASH',
-
-        paidAmount:
-          0,
-      });
-
-
-      // =================================================
-      // 6. CLEAR BILL UI
-      // =================================================
-
-      setBillRows([]);
-
-
-      // =================================================
-      // 7. RELOAD BILL ITEMS
-      // =================================================
-
-      await loadBillItems();
-
-
-      // =================================================
-      // 8. SUCCESS CALLBACK
-      // =================================================
-
-      onSuccess?.();
-
-
-    } catch (e) {
-
-      console.error(
-        'BILL FAILED',
-        e
-      );
-
-
-      const message =
-        e instanceof Error
-          ? e.message
-          : String(e);
-
-
-      setError(
-        message ||
-        'Payment failed'
-      );
-
-
-    } finally {
-
-      setProcessing(false);
-    }
+ async function handleCheckout(
+  selectedPaymentMode: 'CASH' | 'CARD' | 'UPI' | 'CANCEL'
+) {
+  if (processing) return;
+
+  if (billItems.length === 0) {
+    setError('No items in bill');
+    return;
   }
+
+  if (!currentTableId) {
+    setError('No table selected');
+    return;
+  }
+
+  try {
+    setProcessing(true);
+    setError(null);
+
+    // =================================================
+    // 1. CALCULATE FINAL TOTAL
+    // =================================================
+
+    const totalAmount = Number(calculation.grandTotal) || 0;
+
+    // =================================================
+    // 2. CREATE BILL
+    // =================================================
+
+    const result = await window.posApi.createBill({
+      tableNo: currentTableId,
+      tableName: currentTableName,
+      orderType: currentOrderType,
+
+      customerName: customerName.trim() || 'Customer',
+      customerPhone: customerPhone.trim(),
+
+      discountTotal: calculation.discount,
+      deliveryFee: calculation.deliveryFee,
+      deliveryTax: calculation.deliveryTax,
+
+      // =============================================
+      // USER SNAPSHOT
+      // =============================================
+
+      finalizedById: currentUser?.userId || '',
+      finalizedByName: currentUser?.fullName || '',
+
+      // =============================================
+      // PAYMENT
+      // =============================================
+
+      paymentMode: selectedPaymentMode,
+      paymentStatus: 'PAID',
+      paidAmount: totalAmount,
+
+      payments: [
+        {
+          mode: selectedPaymentMode,
+          amount: totalAmount,
+        },
+      ],
+
+      // =============================================
+      // DEVICE
+      // =============================================
+
+      deviceId: 'POS',
+      deviceName: 'Electron POS',
+      appVersion: '1.0',
+
+      // =============================================
+      // DATE
+      // =============================================
+
+      businessDate: new Date().toISOString().slice(0, 10),
+      currency: '₹',
+    });
+
+    // =================================================
+    // 3. CHECK BILL RESULT
+    // =================================================
+
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to create bill');
+    }
+
+    // =================================================
+    // 4. MARK KOT HISTORY
+    //
+    // Repository finds all KOT histories belonging
+    // to currentTableId. No kotHistoryId required.
+    // =================================================
+
+    const kotResult = await window.posApi.markTableHistoryPaid({
+      tableNo: currentTableId,
+      billItems: billItems,
+      orderId: result.srno || '',
+    });
+
+    if (!kotResult.success) {
+      throw new Error(kotResult.error || 'Failed to update KOT history');
+    }
+
+    // =================================================
+    // 5. RESET BILL DRAFT
+    // =================================================
+
+    setBillDraft({
+      customerName: 'Customer',
+      customerPhone: '',
+      discount: 0,
+      discountPercent: 0,
+      deliveryFee: 0,
+      paymentMode: 'CASH',
+      paidAmount: 0,
+    });
+
+    // =================================================
+    // 6. CLEAR BILL UI
+    // =================================================
+
+    setBillRows([]);
+
+    // =================================================
+    // 7. RELOAD BILL ITEMS
+    // =================================================
+
+    await loadBillItems();
+
+    // =================================================
+    // 8. SUCCESS CALLBACK
+    // =================================================
+
+    onSuccess?.();
+
+  } catch (e) {
+    console.error('BILL FAILED', e);
+
+    const message = e instanceof Error ? e.message : String(e);
+
+    setError(message || 'Payment failed');
+
+  } finally {
+    setProcessing(false);
+  }
+}
 
 
   // CANCEL
@@ -2507,42 +2371,7 @@ if (!res.success) {
 
               {/* HEADER */}
 
-              {/* <div
-              className="
-          flex
-          items-center
-          justify-between
-          border-b
-          border-zinc-700
-          px-3
-          py-2
-        "
-            >
-              <div
-                className="
-            text-xs
-            font-semibold
-            uppercase
-            tracking-wide
-            text-white
-          "
-              >
-                {isCreditSale
-                  ? 'Credit Sale'
-                  : 'Partial Payment'}
-              </div>
-
-              <div
-                className="
-            text-xs
-            font-semibold
-            text-zinc-300
-          "
-              >
-                ₹{Number(grandTotal || 0).toFixed(2)}
-              </div>
-            </div> */}
-
+         
 
               {/* PAYMENT BREAKDOWN */}
 
@@ -2650,57 +2479,7 @@ if (!res.success) {
 
               {/* TOTALS */}
 
-              {/* <div
-              className="
-          border-t
-          border-zinc-700
-          px-3
-          py-2
-        "
-            >
-
-              <div
-                className="
-            flex
-            items-center
-            justify-between
-            text-xs
-          "
-              >
-                <span className="text-zinc-400">
-                  PAID
-                </span>
-
-                <span className="font-semibold text-green-400">
-                  ₹{Number(paidAmount || 0).toFixed(2)}
-                </span>
-              </div>
-
-
-              <div
-                className="
-            mt-1
-            flex
-            items-center
-            justify-between
-            text-xs
-          "
-              >
-                <span className="text-zinc-400">
-                  DUE
-                </span>
-
-                <span
-                  className="
-              font-semibold
-              text-red-400
-            "
-                >
-                  ₹{Number(dueAmount || 0).toFixed(2)}
-                </span>
-              </div>
-
-            </div> */}
+          
 
             </div>
           )}
