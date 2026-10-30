@@ -11,6 +11,7 @@ async function insertProducts(list) {
       favorite,name,
       price, discountPrice, discountEligible, image,
       foodType,
+      taxCategory,
       sortOrder, kitchenPrintReq,
       categoryId, productCat,
       parentId, baseProductId,
@@ -24,7 +25,7 @@ async function insertProducts(list) {
      @id, @searchCode,
 @favorite, @name,
 @price, @discountPrice, @discountEligible, @image,
-      @foodType,
+      @foodType,@taxCategory,
       @sortOrder, @kitchenPrintReq,
       @categoryId, @productCat,
       @parentId, @baseProductId,
@@ -58,6 +59,7 @@ async function insertProducts(list) {
         image: row.image ?? null,
 
         foodType: row.foodType ?? null,
+        taxCategory: row.taxCategory ?? 'FOOD_GST',
 
         sortOrder: row.sortOrder ?? 0,
         kitchenPrintReq:

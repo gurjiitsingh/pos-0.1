@@ -37,6 +37,7 @@ async function syncProducts() {
   const list = snapshot.docs.map((doc) => {
     const data = doc.data() || {};
 
+    console.log("taxCategory-----------------------",data.name, data.taxCategory)
   return {
   id: doc.id,
 
@@ -46,7 +47,7 @@ async function syncProducts() {
 
   name: data.name || '',
   price: anyToDouble(data.price),
-
+  taxCategory: data.taxCategory,
   discountPrice:
     typeof data.discountPrice === 'number'
       ? data.discountPrice
@@ -150,6 +151,26 @@ async function syncProducts() {
   await insertProducts(list);
 
   const rows = await getAllProducts();
+
+//   console.log('========== SQLITE TAX CATEGORY CHECK ==========');
+
+// console.table(
+//   rows
+//     .filter((p) =>
+//       ['HAYWARDS', 'KINGFISHER'].includes(
+//         String(p.name || '').trim().toUpperCase()
+//       )
+//     )
+//     .map((p) => ({
+//       id: p.id,
+//       name: p.name,
+//       taxCategory: p.taxCategory,
+//       taxRate: p.taxRate,
+//       taxType: p.taxType,
+//     }))
+// );
+
+// console.log('===============================================');
 
   console.log(
     'SQLITE PRODUCTS AFTER INSERT =>',

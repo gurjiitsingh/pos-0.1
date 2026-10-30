@@ -165,6 +165,7 @@ async handleJob(job) {
         config.paperSize
       );
 
+       console.log("======== BILL PRINT TEST ==========");
       console.log(output);
 
       if (typeof output !== 'string' || !output.trim()) {

@@ -25,6 +25,8 @@ const { db } = require('./sqlite.cjs');
 
 async function addCartItem(item, partition) {
 
+  console.log("item to cart-------------------",item)
+
   const productId = item.productId;
 
   if (!productId) {

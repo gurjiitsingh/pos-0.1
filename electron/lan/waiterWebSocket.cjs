@@ -29,9 +29,9 @@ function broadcastSnapshot() {
       }
     }
 
-    console.log(
-      `[WAITER WS] Sent ${items.length} bill items`
-    );
+    // console.log(
+    //   `[WAITER WS] Sent ${items.length} bill items`
+    // );
   } catch (error) {
     console.error(
       "[WAITER WS] Snapshot failed:",

@@ -260,7 +260,7 @@ const { showToast, toastComponent } = useToast();
           // ------------------------------------------------
           // TAX
           // ------------------------------------------------
-
+          taxCategory: item.taxCategory,
           taxRate:
             Number(item.taxRate ?? 0),
 
@@ -536,7 +536,7 @@ const { showToast, toastComponent } = useToast();
       //     type: typeof item.discountEligible,
       //   }))
       // );
-
+console.log("billitems---------------------",billItems)
       await window.posApi.insertBillItems(
         billItems
       );

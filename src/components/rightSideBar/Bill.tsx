@@ -167,7 +167,7 @@ const { showToast, toastComponent } = useToast();
         await window.posApi.getBillItems(
           currentTableId
         );
-
+ 
       // =============================================
       // CART ITEMS
       //
@@ -2046,165 +2046,224 @@ const { showToast, toastComponent } = useToast();
   // PRINT BILL ONLY
   // =====================================================
 
-  async function printBill() {
+async function printBill() {
+  if (billItems.length === 0) {
+    showToast('No items to print');
+    return;
+  }
+
+    // DEBUG: Check taxCategory for every bill item
+  console.log('========== BILL ITEMS TAX CATEGORY ==========');
+
+  billItems.forEach((i, index) => {
+    console.log(`Item ${index + 1}:`, {
+      name: i.name,
+      taxCategory: i.taxCategory,
+      taxCategoryType: typeof i.taxCategory,
+      isNull: i.taxCategory === null,
+      isUndefined: i.taxCategory === undefined,
+    });
+  });
+
+  const regularItems = billItems.filter(
+    (i) => i.taxCategory == null || i.taxCategory !== 'LIQUOR_VAT'
+  );
+
+  const liquorItems = billItems.filter(
+    (i) => i.taxCategory === 'LIQUOR_VAT'
+  );
+
+  console.log('REGULAR GST ITEMS:', regularItems.map((i) => i.name));
+  console.log('LIQUOR VAT ITEMS:', liquorItems.map((i) => i.name));
+
+  try {
+    // Print the regular bill.
+    if (regularItems.length > 0) {
+      console.log('Printing regular GST bill');
+      await printRegularBill(regularItems);
+    }
+
+    // Print a second bill ONLY when VAT items exist.
+    if (liquorItems.length > 0) {
+      console.log('Printing liquor VAT bill');
+      await printLiquorVatBill(liquorItems);
+    } else {
+      console.log('No liquor VAT items. Skipping second bill.');
+    }
+  } catch (e: any) {
+    console.error('PRINT FAILED', e);
+    showToast(
+      'Print failed: ' + (e?.message || 'Unknown error'),
+      'error'
+    );
+  }
+}
+
+async function printRegularBill(regularItems: typeof billItems) {
+  if (regularItems.length === 0) return;
+
+    const numberResult =
+    await window.posApi.getOrCreateOrderNo(currentTableId);
+
+  if (!numberResult?.success || !numberResult.srno) {
+    throw new Error('Invoice number not reserved for this table.');
+  }
+
+  const actualBillNo = numberResult.srno;
+  await printBillItems(regularItems, actualBillNo);
+}
+
+async function printLiquorVatBill(liquorItems: typeof billItems) {
+  if (liquorItems.length === 0) return;
+
+    const numberResult =
+    await window.posApi.getOrCreateOrderNo_Liquer(currentTableId);
+
+  if (!numberResult?.success || !numberResult.srno) {
+    throw new Error('Invoice number not reserved for this table.');
+  }
+
+  const actualBillNo = numberResult.srno;
+  await printBillItems(liquorItems, actualBillNo);
+}
+
+async function printBillItems(items: typeof billItems,actualBillNo) {
+
+  // Keep your existing receiptData creation here.
+  const itemSubtotal = items.reduce((total, i) => {
+    const price =
+      Number(i.basePrice || 0) +
+      Number(i.modifierTotal || 0);
+
+    const quantity = Number(i.quantity || 0);
+
+    return total + price * quantity;
+  }, 0);
+
+  const receiptData = {
+    billNo: actualBillNo,
+    orderNo: '',
+    tableNo: currentTableId,
+    tableName: currentTableName,
+    orderType: currentOrderType,
+    paymentMode,
+    createdAt: Date.now(),
+
+    items: items.map((i) => {
+      const price =
+        Number(i.basePrice || 0) +
+        Number(i.modifierTotal || 0);
+
+      const quantity = Number(i.quantity || 0);
+
+      return {
+        name: i.name,
+        quantity,
+        price,
+        subtotal: price * quantity,
+        modifiersJson: i.modifiersJson || '',
+        note: i.note || '',
+      };
+    }),
+
+    // Temporary shared receipt totals.
+    // VAT/GST-specific calculations can be added later.
+    subtotal: itemSubtotal,
+    tax: 0,
+    discount: 0,
+    deliveryFee: 0,
+    deliveryTax: 0,
+    grandTotal: itemSubtotal,
+
+    customerName,
+    customerPhone,
+    kotNumberText: '',
+    stewardName: '',
+  };
+
+  console.log(
+    'PRINTING BILL:',
+    actualBillNo,
+    items.map((i) => i.name)
+  );
+
+  const res = await window.posApi.print({
+    role: 'BILL',
+    source: 'POS',
+    data: receiptData,
+  });
+
+  if (!res.success) {
+    throw new Error(res.error || 'Print failed');
+  }
+}
+
+
+
+
+
+  async function printBill_old() {
 
     if (billItems.length === 0) {
-
 showToast('No items to print');
-
       return;
     }
 
-
-    const numberResult =
-      await window.posApi.getOrCreateOrderNo(currentTableId);
-
+    const numberResult = await window.posApi.getOrCreateOrderNo(currentTableId);
     if (!numberResult?.success || !numberResult.srno) {
       throw new Error(
         'Invoice number not reserved for this table. Please check the order-number flow.'
       );
     }
-
-
     const actualBillNo = numberResult.srno;
 
-    console.log("in no--------------- ", actualBillNo)
-    console.log(
-      'PRINT BILL CLICKED'
-    );
-
     try {
-
       const receiptData = {
-
         billNo: actualBillNo,
-
-        orderNo:
-          '',
-
-        tableNo:
-          currentTableId,
-
-        tableName:
-          currentTableName,
-
-        orderType:
-          currentOrderType,
-
+        orderNo:'',
+        tableNo: currentTableId,
+        tableName: currentTableName,
+        orderType: currentOrderType,
         paymentMode,
-
-        createdAt:
-          Date.now(),
-
-        items:
-          billItems.map((i) => {
-
-            const price =
-              Number(
-                i.basePrice || 0
-              ) +
-              Number(
-                i.modifierTotal || 0
-              );
-
-            const quantity =
-              Number(
-                i.quantity || 0
-              );
-
+        createdAt: Date.now(),
+        items: billItems.map((i) => {
+            const price = Number( i.basePrice || 0 ) +  Number( i.modifierTotal || 0 );
+            const quantity =  Number( i.quantity || 0  );
             return {
-
-              name:
-                i.name,
-
+              name: i.name,
               quantity,
-
               price,
-
-              subtotal:
-                price * quantity,
-
-              modifiersJson:
-                i.modifiersJson ||
-                '',
-
-              note:
-                i.note || '',
+              subtotal: price * quantity,
+              modifiersJson: i.modifiersJson ||  '',
+              note: i.note || '',
             };
           }),
-
-        subtotal:
-          calculation.itemSubtotal,
-
-        tax:
-          calculation.itemTax,
-
-        discount:
-          calculation.discount,
-
-        deliveryFee:
-          calculation.deliveryFee,
-
-        deliveryTax:
-          calculation.deliveryTax,
-
-        grandTotal:
-          calculation.grandTotal,
-
+        subtotal: calculation.itemSubtotal,
+        tax: calculation.itemTax,
+        discount: calculation.discount,
+        deliveryFee: calculation.deliveryFee,
+        deliveryTax: calculation.deliveryTax,
+        grandTotal: calculation.grandTotal,
         customerName,
-
         customerPhone,
-
-        kotNumberText:
-          '',
-
-        stewardName:
-          '',
+        kotNumberText: '',
+        stewardName: '',
       };
 
-      const res =
-        await window.posApi.print({
 
-          role:
-            'BILL',
+     const res = await window.posApi.print({
+  role: 'BILL',
+  source: 'POS',
+  data: receiptData,
+});
 
-          source:
-            'POS',
-
-          data:
-            receiptData,
-        });
-
-      console.log(
-        'PRINT RESULT',
-        res
-      );
-
-      if (!res.success) {
-
-        throw new Error(
-          res.error ||
-          'Print failed'
-        );
-      }
-
-      console.log(
-        'BILL PRINTED SUCCESSFULLY'
-      );
-
-    } catch (e: any) {
-
-      console.error(
-        'PRINT FAILED',
-        e
-      );
-
-showToast(
-  'Print failed: ' +
-    (e?.message || 'Unknown error'),
-  'error'
-);
-    }
+if (!res.success) {
+  throw new Error(res.error || 'Print failed');
+}
+} catch (e: any) {
+  console.error('PRINT FAILED', e);
+  showToast('Print failed: ' + (e?.message || 'Unknown error'), 'error');
+}
   }
 
 
