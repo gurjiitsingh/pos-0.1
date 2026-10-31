@@ -62,63 +62,34 @@ function getBillableKotItems(tableNo) {
 
 async function createBillFromKitchen(input) {
   const { tableNo } = input || {};
-
-  if (!tableNo) {
-    throw new Error('tableNo is required');
-  }
-
-
+  if (!tableNo) throw new Error('tableNo is required');
 
   // Read billable items only once
   const kotItems = getBillableKotItems(tableNo);
-
-  if (!kotItems.length) {
-    throw new Error(
-      `No billable kitchen items found for table ${tableNo}`
-    );
-  }
+  if (!kotItems.length) throw new Error(`No billable kitchen items found for table ${tableNo}`);
 
   // Split items by tax category
-  const gstItems = kotItems.filter(
-    (item) => item.taxCategory !== 'LIQUOR_VAT'
-  );
-
-  const liquorVatItems = kotItems.filter(
-    (item) => item.taxCategory === 'LIQUOR_VAT'
-  );
+  const gstItems = kotItems.filter((item) => item.taxCategory !== 'LIQUOR_VAT');
+  const liquorVatItems = kotItems.filter((item) => item.taxCategory === 'LIQUOR_VAT');
 
   const results = [];
 
-    console.log('[BILL SAVE] GST items:', gstItems.length);
-console.log('[BILL SAVE] LIQUOR VAT items:', liquorVatItems.length);
-
   // Save GST order
-  if (gstItems.length > 0) {
-    const gstResult = await savOrder(
-      input,
-      gstItems,
-      'FOOD_GST'
-    );
-
-    results.push(gstResult);
-  }
+  if (gstItems.length > 0) results.push(await savOrder(input, gstItems, 'FOOD_GST'));
 
   // Save Liquor VAT order
-  if (liquorVatItems.length > 0) {
-    const vatResult = await savOrder(
-      input,
-      liquorVatItems,
-      'LIQUOR_VAT'
-    );
+  if (liquorVatItems.length > 0) results.push(await savOrder(input, liquorVatItems, 'LIQUOR_VAT'));
 
-    results.push(vatResult);
-  }
+  // Complete KOT items only after every category order has saved successfully
+  const cleanupKot = db.transaction(() => {
+    db.prepare(`UPDATE pos_kot_items SET status = 'PAID' WHERE tableNo = ? AND status IN ('PENDING', 'DONE')`).run(tableNo);
+    const deleted = db.prepare(`DELETE FROM pos_kot_items WHERE tableNo = ? AND UPPER(COALESCE(status, '')) IN ('PAID', 'DELETED')`).run(tableNo);
+    console.log('[BILL CLEANUP] KOT items removed:', deleted.changes, 'table:', tableNo);
+  });
 
-  return {
-    success: true,
-    orders: results,
-    orderCount: results.length,
-  };
+  cleanupKot();
+
+  return { success: true, orders: results, orderCount: results.length };
 }
 
 
