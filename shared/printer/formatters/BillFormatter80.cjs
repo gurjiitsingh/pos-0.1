@@ -5,6 +5,16 @@ class BillFormatter80 {
     const line = '-'.repeat(WIDTH);
 
     // =====================================================
+// PRINTER FONT
+// =====================================================
+
+// ESC/POS Font B
+const FONT_B = '\x1B\x4D\x01';
+
+// Restore ESC/POS Font A
+const FONT_A = '\x1B\x4D\x00';
+
+    // =====================================================
     // HELPERS
     // =====================================================
 
@@ -430,7 +440,8 @@ if (tax > 0) {
     output.push('');
   
 
-    return output.join('\n');
+    // return output.join('\n');
+return FONT_B + output.join('\n') + FONT_A;
   }
 }
 

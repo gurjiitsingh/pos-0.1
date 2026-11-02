@@ -12,7 +12,9 @@ export interface BillItemInput {
   discountEligible: boolean;
   basePrice: number;
   taxRate: number;
+   taxRate1?: number;
   taxType: TaxType;
+  taxType1?: TaxType;
 }
 
 export interface BillCalculationResult {
