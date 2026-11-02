@@ -11,6 +11,7 @@ import { usePosTheme } from '@/PosThemeStore/PosThemeContext';
 import PaymentAllocation, { PaymentAllocationValue } from './PaymentAllocationValue';
 import { usePosAuth } from "@/store/PosAuthContext";
 import BillItem from './BillItems';
+import LiquorSummary from './LiquorBillSummary';
  
 
 type PaymentAllocationProps = {
@@ -223,6 +224,13 @@ const { showToast, toastComponent } = useToast();
   const discountPercent =
     billDraft.discountPercent;
 
+    // LIQUOR DISCOUNT
+const liquorDiscount =
+  Number(billDraft.liquorDiscount || 0);
+
+const liquorDiscountPercent =
+  Number(billDraft.liquorDiscountPercent || 0);
+
   const deliveryFee =
     billDraft.deliveryFee;
 
@@ -319,52 +327,36 @@ const { regularItems, liquorItems } = useMemo(() => {
   }, [regularItems, discount, discountPercent, deliveryFee]);
 
 
-  const calculationLiquorVat = useMemo(() => {
+ 
 
-    const mappedItems = liquorItems.map((i) => ({
+const calculationLiquorVat = useMemo(() => {
+  const mappedItems = liquorItems.map((i) => ({
+    productId: i.productId,
+    name: i.name,
+    quantity: Number(i.quantity || 0),
+    basePrice: Number(i.basePrice || 0),
+    taxRate: Number(i.taxRate || 0),
+    taxType: (i.taxType || 'exclusive') as 'inclusive' | 'exclusive',
+    discountEligible:
+      i.discountEligible == null
+        ? true
+        : Boolean(i.discountEligible),
+  }));
 
-      productId: i.productId,
-      name: i.name,
-      quantity: Number(i.quantity || 0),
-      basePrice: Number(i.basePrice || 0),
-      taxRate: Number(i.taxRate || 0),
-      taxType: (i.taxType || 'exclusive') as
-        | 'inclusive'
-        | 'exclusive',
+  const result = calculateBillLiquorVat({
+    items: mappedItems,
+    discountFlat: liquorDiscount,
+    discountPercent: liquorDiscountPercent,
+  });
 
-      // SQLite INTEGER -> Boolean
-      // 0 = false, 1 = true
-      // Missing/null defaults to true
-
-      discountEligible:
-        i.discountEligible == null
-          ? true
-          : Boolean(i.discountEligible),
-    }));
-
-    const result = calculateBillLiquorVat({
-      items: mappedItems,
-      // taxMode: 'PER_ITEM',
-      discountFlat: discount,
-      discountPercent: discountPercent,
-      // deliveryFee,
-     // deliveryTaxPercent: 0,
-    });
-
-      
-
-    return {
-      itemSubtotal: fromPaise(result.itemSubtotalPaise),
-      itemTax: fromPaise(result.totalTaxPaise),
-      discount: fromPaise(result.discountPaise),
-      // deliveryFee: fromPaise(result.deliveryFeePaise),
-      // deliveryTax: fromPaise(result.deliveryTaxPaise),
-      grandTotal: fromPaise(result.grandTotalPaise),
-      raw: result,
-    };
-  }, [liquorItems, discount, discountPercent, deliveryFee]);
-
-
+  return {
+    itemSubtotal: fromPaise(result.itemSubtotalPaise),
+    itemTax: fromPaise(result.totalTaxPaise),
+    discount: fromPaise(result.discountPaise),
+    grandTotal: fromPaise(result.grandTotalPaise),
+    raw: result,
+  };
+}, [liquorItems, liquorDiscount, liquorDiscountPercent]);
   // =====================================================
   // PAYMENT
   // =====================================================
@@ -2149,18 +2141,10 @@ async function printBillItems(
   // =====================================================
 
 
-  return (
+return (
     <>
     <div
-  className={`
-    flex
-    h-full
-    min-h-0
-    flex-col
-    overflow-hidden
-    ${background.className}
-    ${background.text}
-  `}
+  className={`flex h-full min-h-0 flex-col overflow-hidden ${background.className} ${background.text}`}
 >
 
       {/* =================================================
@@ -2168,17 +2152,7 @@ async function printBillItems(
       ================================================= */}
 
       <div
-        className={`
-          shrink-0
-          w-full
-          border-b
-          ${background.border}
-          px-4
-          py-2
-          flex
-          items-center
-          justify-between
-        `}
+        className={`shrink-0 w-full border-b ${background.border} px-4 py-2 flex items-center justify-between`}
       >
 
         <div className="text-sm opacity-80">
@@ -2191,7 +2165,6 @@ async function printBillItems(
 
       </div>
 
-
       {/* =================================================
           ITEM LIST
       ================================================= */}
@@ -2201,14 +2174,7 @@ async function printBillItems(
 ================================================= */}
 
 <div
-  className={`
-    flex-1
-    min-h-0
-    pb-6
-    overflow-y-auto
-    divide-y
-    ${background.divide}
-  `}
+  className={`flex-1 min-h-0 pb-6 overflow-y-auto divide-y ${background.divide}`}
 >
   {billItems.map((item) => (
     <BillItem
@@ -2225,21 +2191,13 @@ async function printBillItems(
   ))}
 </div>
 
-
-
     <div className="flex shrink-0 flex-col">
         {/* =================================================
           BILL BUTTONS
         ================================================= */}
 
         <div
-          className="
-    relative
-    shrink-0
-    px-2
-    bg-zinc-800
-    py-1
-  "
+          className="relative shrink-0 px-2 bg-zinc-800 py-1"
         >
 
           {/* =================================================
@@ -2248,48 +2206,22 @@ async function printBillItems(
 
           {showPaymentSummary && (
             <div
-              className="
-        absolute
-        bottom-[100%]
-        left-2
-        right-2
-        mb-1
-        z-40
-        overflow-hidden
-        rounded-t-md
-        border
-        border-zinc-600
-        bg-zinc-900
-        shadow-xl
-      "
+              className="absolute bottom-[100%] left-2 right-2 mb-1 z-40 overflow-hidden rounded-t-md border border-zinc-600 bg-zinc-900 shadow-xl"
             >
 
               {/* HEADER */}
 
-         
-
               {/* PAYMENT BREAKDOWN */}
 
               <div
-                className="
-          max-h-95
-          overflow-y-auto
-          px-3
-          py-2
-        "
+                className="max-h-95 overflow-y-auto px-3 py-2"
               >
 
                 {/* CASH */}
 
                 {cashPaid > 0 && (
                   <div
-                    className="
-              flex
-              items-center
-              justify-between
-              py-1
-              text-xs
-            "
+                    className="flex items-center justify-between py-1 text-xs"
                   >
                     <span className="text-zinc-400">
                       CASH
@@ -2301,18 +2233,11 @@ async function printBillItems(
                   </div>
                 )}
 
-
                 {/* CARD */}
 
                 {cardPaid > 0 && (
                   <div
-                    className="
-              flex
-              items-center
-              justify-between
-              py-1
-              text-xs
-            "
+                    className="flex items-center justify-between py-1 text-xs"
                   >
                     <span className="text-zinc-400">
                       CARD
@@ -2324,18 +2249,11 @@ async function printBillItems(
                   </div>
                 )}
 
-
                 {/* UPI */}
 
                 {upiPaid > 0 && (
                   <div
-                    className="
-              flex
-              items-center
-              justify-between
-              py-1
-              text-xs
-            "
+                    className="flex items-center justify-between py-1 text-xs"
                   >
                     <span className="text-zinc-400">
                       UPI
@@ -2346,7 +2264,6 @@ async function printBillItems(
                     </span>
                   </div>
                 )}
-
 
                 {/* CREDIT */}
 
@@ -2371,14 +2288,10 @@ async function printBillItems(
 
               </div>
 
-
               {/* TOTALS */}
-
-          
 
             </div>
           )}
-
 
           {/* =================================================
       PAYMENT STATUS BADGE
@@ -2392,50 +2305,16 @@ async function printBillItems(
                   (prev) => !prev
                 )
               }
-              className="
-        absolute
-        bottom-[100%]
-        left-1/2
-        z-50
-        flex
-        -translate-x-1/2
-        translate-y-[1px]
-        items-center
-        gap-1
-        rounded-t-md
-        border
-        border-b-0
-        border-zinc-600
-        bg-zinc-800
-        px-3
-        py-1
-        text-[10px]
-        font-bold
-        uppercase
-        tracking-wide
-        text-white
-        shadow-md
-        transition-colors
-        hover:bg-zinc-700
-      "
+              className="absolute bottom-[100%] left-1/2 z-50 flex -translate-x-1/2 translate-y-[1px] items-center gap-1 rounded-t-md border border-b-0 border-zinc-600 bg-zinc-800 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-white shadow-md transition-colors hover:bg-zinc-700"
             >
 
               {/* UP ARROW */}
 
               <span
-                className={`
-          text-[11px]
-          transition-transform
-          duration-200
-          ${showPaymentSummary
-                    ? 'rotate-180'
-                    : ''
-                  }
-        `}
+                className={`text-[11px] transition-transform duration-200 ${showPaymentSummary ? 'rotate-180' : '' }`}
               >
                 ↑
               </span>
-
 
               {/* TITLE */}
 
@@ -2448,7 +2327,6 @@ async function printBillItems(
             </button>
           )}
 
-
           {/* =================================================
       PAYMENT BUTTONS
   ================================================= */}
@@ -2460,19 +2338,10 @@ async function printBillItems(
               <button
                 type="button"
                 onClick={printBill}
-                className={`
-        h-8
-        w-fit
-        rounded
-        px-3
-        text-xs
-        font-semibold
-        ${POS_THEME.BillButton}
-      `}
+                className={`h-8 w-fit rounded px-3 text-xs font-semibold ${POS_THEME.BillButton}`}
               >
                 PRINT
               </button>
-
 
               {/* CASH */}
 
@@ -2485,26 +2354,12 @@ async function printBillItems(
                   processing ||
                   billItems.length === 0
                 }
-                className="
-        h-8
-        w-fit
-        rounded-md
-        bg-green-600
-        px-3
-        text-xs
-        font-semibold
-        text-white
-        transition-colors
-        hover:bg-green-700
-        disabled:cursor-not-allowed
-        disabled:opacity-50
-      "
+                className="h-8 w-fit rounded-md bg-green-600 px-3 text-xs font-semibold text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {processing
                   ? 'PROCESSING...'
                   : 'CASH'}
               </button>
-
 
               {/* CARD */}
 
@@ -2517,24 +2372,10 @@ async function printBillItems(
                   processing ||
                   billItems.length === 0
                 }
-                className="
-        h-8
-        w-fit
-        rounded-md
-        bg-blue-600
-        px-3
-        text-xs
-        font-semibold
-        text-white
-        transition-colors
-        hover:bg-blue-700
-        disabled:cursor-not-allowed
-        disabled:opacity-50
-      "
+                className="h-8 w-fit rounded-md bg-blue-600 px-3 text-xs font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 CARD
               </button>
-
 
               {/* UPI */}
 
@@ -2547,24 +2388,10 @@ async function printBillItems(
                   processing ||
                   billItems.length === 0
                 }
-                className="
-        h-8
-        w-fit
-        rounded-md
-        bg-purple-600
-        px-3
-        text-xs
-        font-semibold
-        text-white
-        transition-colors
-        hover:bg-purple-700
-        disabled:cursor-not-allowed
-        disabled:opacity-50
-      "
+                className="h-8 w-fit rounded-md bg-purple-600 px-3 text-xs font-semibold text-white transition-colors hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 UPI
               </button>
-
 
               {/* MORE */}
 
@@ -2572,44 +2399,14 @@ async function printBillItems(
     MORE STATUS STRIP
 ================================================= */}
 
-
               {/* MORE BUTTON */}
               <button
                 type="button"
                 onClick={() => setShowMoreMenu((prev) => !prev)}
-                className="
-    absolute
-    bottom-[100%]
-    right-2
-    z-50
-    flex
-    items-center
-    gap-1
-    rounded-t-md
-    border
-    border-b-0
-    border-zinc-600
-    bg-zinc-900
-    px-3
-    py-1
-    text-[10px]
-    font-bold
-    uppercase
-    tracking-wide
-    text-white
-    shadow-md
-    transition-colors
-    hover:bg-zinc-800
-  "
+                className="absolute bottom-[100%] right-2 z-50 flex items-center gap-1 rounded-t-md border border-b-0 border-zinc-600 bg-zinc-900 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-white shadow-md transition-colors hover:bg-zinc-800"
               >
                 <span
-                  className={`
-      inline-block
-      text-[11px]
-      transition-transform
-      duration-200
-      ${showMoreMenu ? 'rotate-180' : ''}
-    `}
+                  className={`inline-block text-[11px] transition-transform duration-200 ${showMoreMenu ? 'rotate-180' : ''}`}
                 >
                   ↑
                 </span>
@@ -2620,23 +2417,7 @@ async function printBillItems(
               {/* MORE MENU */}
               {showMoreMenu && (
                 <div
-                  className="
-      absolute
-      bottom-[100%]
-      right-2
-      z-40
-      mb-1
-      w-48
-      overflow-hidden
-      rounded-t-md
-      border
-      border-zinc-600
-      bg-zinc-900
-      px-1
-      pt-1
-      pb-7
-      shadow-xl
-    "
+                  className="absolute bottom-[100%] right-2 z-40 mb-1 w-48 overflow-hidden rounded-t-md border border-zinc-600 bg-zinc-900 px-1 pt-1 pb-7 shadow-xl"
                 >
                   {/* COMPLIMENTARY */}
                   <div className='flex  items-center
@@ -2648,20 +2429,7 @@ async function printBillItems(
                         setShowMoreMenu(false);
                         setShowComplimentaryMenu(true);
                       }}
-                      className="
-        flex
-        w-full
-        items-center
-        rounded-sm
-        px-3
-        py-1.5
-        text-left
-        text-xs
-        font-medium
-        text-white
-        transition-colors
-        hover:bg-zinc-800
-      "
+                      className="flex w-full items-center rounded-sm px-3 py-1.5 text-left text-xs font-medium text-white transition-colors hover:bg-zinc-800"
                     >
                       X
                     </button></div>
@@ -2673,20 +2441,7 @@ async function printBillItems(
                       handleComplimentaryCheckout('DRIVER');
                       setShowMoreMenu(false);
                     }}
-                    className="
-        flex
-        w-full
-        items-center
-        rounded-sm
-        px-3
-        py-1.5
-        text-left
-        text-xs
-        font-medium
-        text-white
-        transition-colors
-        hover:bg-zinc-800
-      "
+                    className="flex w-full items-center rounded-sm px-3 py-1.5 text-left text-xs font-medium text-white transition-colors hover:bg-zinc-800"
                   >
                     Driver
                   </button>
@@ -2698,20 +2453,7 @@ async function printBillItems(
                       handleComplimentaryCheckout('FRIEND');
                       setShowMoreMenu(false);
                     }}
-                    className="
-        flex
-        w-full
-        items-center
-        rounded-sm
-        px-3
-        py-1.5
-        text-left
-        text-xs
-        font-medium
-        text-white
-        transition-colors
-        hover:bg-zinc-800
-      "
+                    className="flex w-full items-center rounded-sm px-3 py-1.5 text-left text-xs font-medium text-white transition-colors hover:bg-zinc-800"
                   >
                     Friend
                   </button>
@@ -2723,20 +2465,7 @@ async function printBillItems(
                       handleComplimentaryCheckout('FAMILY');
                       setShowMoreMenu(false);
                     }}
-                    className="
-        flex
-        w-full
-        items-center
-        rounded-sm
-        px-3
-        py-1.5
-        text-left
-        text-xs
-        font-medium
-        text-white
-        transition-colors
-        hover:bg-zinc-800
-      "
+                    className="flex w-full items-center rounded-sm px-3 py-1.5 text-left text-xs font-medium text-white transition-colors hover:bg-zinc-800"
                   >
                     Family
                   </button>
@@ -2748,20 +2477,7 @@ async function printBillItems(
                       handleComplimentaryCheckout('STAFF');
                       setShowMoreMenu(false);
                     }}
-                    className="
-        flex
-        w-full
-        items-center
-        rounded-sm
-        px-3
-        py-1.5
-        text-left
-        text-xs
-        font-medium
-        text-white
-        transition-colors
-        hover:bg-zinc-800
-      "
+                    className="flex w-full items-center rounded-sm px-3 py-1.5 text-left text-xs font-medium text-white transition-colors hover:bg-zinc-800"
                   >
                     Staff
                   </button>
@@ -2773,26 +2489,12 @@ async function printBillItems(
                       handleComplimentaryCheckout('OWNER');
                       setShowMoreMenu(false);
                     }}
-                    className="
-        flex
-        w-full
-        items-center
-        rounded-sm
-        px-3
-        py-1.5
-        text-left
-        text-xs
-        font-medium
-        text-white
-        transition-colors
-        hover:bg-zinc-800
-      "
+                    className="flex w-full items-center rounded-sm px-3 py-1.5 text-left text-xs font-medium text-white transition-colors hover:bg-zinc-800"
                   >
                     Owner
                   </button>
                 </div>
               )}
-
 
             </div>
 
@@ -2809,20 +2511,7 @@ async function printBillItems(
                 processing ||
                 billItems.length === 0
               }
-              className="
-        h-8
-        w-fit
-        rounded-md
-        bg-green-600
-        px-3
-        text-xs
-        font-semibold
-        text-white
-        transition-colors
-        hover:bg-green-700
-        disabled:cursor-not-allowed
-        disabled:opacity-50
-      "
+              className="h-8 w-fit rounded-md bg-green-600 px-3 text-xs font-semibold text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {processing
                 ? 'PROCESSING...'
@@ -2833,31 +2522,20 @@ async function printBillItems(
 
         </div>
 
-
         {/* =================================================
           CALCULATIONS   border-t
           ${background.border}
       ================================================= */}
 
         <div
-          className={`
-    space-y-1
-    px-3
-    py-2
-    text-[12px]
-  `}
+          className={`space-y-1 px-3 py-2 text-[12px]`}
         >
           {/* =====================================================
       SUBTOTAL
   ===================================================== */}
 
           <div
-            className="
-      flex
-      items-center
-      justify-between
-      py-0.5
-    "
+            className="flex items-center justify-between py-0.5"
           >
             <span className="opacity-55">
               Subtotal
@@ -2868,18 +2546,12 @@ async function printBillItems(
             </span>
           </div>
 
-
           {/* =====================================================
       TAX
   ===================================================== */}
 
           <div
-            className="
-      flex
-      items-center
-      justify-between
-      py-0.5
-    "
+            className="flex items-center justify-between py-0.5"
           >
             <span className="opacity-55">
               Tax
@@ -2890,50 +2562,28 @@ async function printBillItems(
             </span>
           </div>
 
-
           {/* =====================================================
       DISCOUNT
   ===================================================== */}
 
           <div
-            className="
-      flex
-      items-center
-      justify-between
-      gap-2
-      py-1
-    "
+            className="flex items-center justify-between gap-2 py-1"
           >
 
             {/* LEFT */}
 
             <div
-              className="
-        flex
-        min-w-0
-        items-center
-        gap-2
-      "
+              className="flex min-w-0 items-center gap-2"
             >
 
               <span className="shrink-0 opacity-55">
                 Discount
               </span>
 
-
               {/* FLAT */}
 
               <div
-                className={`
-          flex
-          h-7
-          w-[68px]
-          items-center
-          rounded
-          border
-          ${background.border}
-          bg-black/[0.025]
-        `}
+                className={`flex h-7 w-[68px] items-center rounded border ${background.border} bg-black/[0.025]`}
               >
 
                 <span className="pl-2 text-[10px] opacity-35">
@@ -2967,24 +2617,10 @@ async function printBillItems(
 
                   }}
                   placeholder="0"
-                  className={`
-    h-full
-    w-full
-    bg-transparent
-    px-1
-    text-right
-    text-[11px]
-    ${background.text}
-    outline-none
-
-    [appearance:textfield]
-    [&::-webkit-inner-spin-button]:appearance-none
-    [&::-webkit-outer-spin-button]:appearance-none
-  `}
+                  className={`h-full w-full bg-transparent px-1 text-right text-[11px] ${background.text} outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
                 />
 
               </div>
-
 
               {/* OR */}
 
@@ -2992,20 +2628,10 @@ async function printBillItems(
                 OR
               </span>
 
-
               {/* PERCENT */}
 
               <div
-                className={`
-          flex
-          h-7
-          w-[62px]
-          items-center
-          rounded
-          border
-          ${background.border}
-          bg-black/[0.025]
-        `}
+                className={`flex h-7 w-[62px] items-center rounded border ${background.border} bg-black/[0.025]`}
               >
 
                 <input
@@ -3040,20 +2666,7 @@ async function printBillItems(
 
                   }}
                   placeholder="0"
-                  className={`
-    h-full
-    w-full
-    bg-transparent
-    px-1
-    text-right
-    text-[11px]
-    ${background.text}
-    outline-none
-
-    [appearance:textfield]
-    [&::-webkit-inner-spin-button]:appearance-none
-    [&::-webkit-outer-spin-button]:appearance-none
-  `}
+                  className={`h-full w-full bg-transparent px-1 text-right text-[11px] ${background.text} outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
                 />
 
                 <span className="pr-2 text-[10px] opacity-40">
@@ -3064,62 +2677,36 @@ async function printBillItems(
 
             </div>
 
-
             {/* CALCULATED DISCOUNT */}
 
             <span
-              className="
-        shrink-0
-        font-medium
-        opacity-70
-      "
+              className="shrink-0 font-medium opacity-70"
             >
               − ₹{calculation.discount.toFixed(2)}
             </span>
 
           </div>
 
-
           {/* =====================================================
       DELIVERY
   ===================================================== */}
 
           <div
-            className="
-      flex
-      items-center
-      justify-between
-      gap-2
-      py-1
-    "
+            className="flex items-center justify-between gap-2 py-1"
           >
 
             {/* LEFT */}
 
             <div
-              className="
-        flex
-        items-center
-        gap-2
-      "
+              className="flex items-center gap-2"
             >
 
               <span className="opacity-55">
                 Delivery
               </span>
 
-
               <div
-                className={`
-          flex
-          h-7
-          w-[72px]
-          items-center
-          rounded
-          border
-          ${background.border}
-          bg-black/[0.025]
-        `}
+                className={`flex h-7 w-[72px] items-center rounded border ${background.border} bg-black/[0.025]`}
               >
 
                 <span className="pl-2 text-[10px] opacity-35">
@@ -3153,74 +2740,39 @@ async function printBillItems(
 
                   }}
                   placeholder="0"
-                  className={`
-    h-full
-    w-full
-    bg-transparent
-    px-1
-    text-right
-    text-[11px]
-    ${background.text}
-    outline-none
-
-    [appearance:textfield]
-    [&::-webkit-inner-spin-button]:appearance-none
-    [&::-webkit-outer-spin-button]:appearance-none
-  `}
+                  className={`h-full w-full bg-transparent px-1 text-right text-[11px] ${background.text} outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
                 />
 
               </div>
 
             </div>
 
-
             {/* DELIVERY TOTAL */}
 
             <span
-              className="
-        shrink-0
-        font-medium
-        opacity-70
-      "
+              className="shrink-0 font-medium opacity-70"
             >
               ₹{calculation.deliveryFee.toFixed(2)}
             </span>
 
           </div>
 
-
           {/* =====================================================
       GRAND TOTAL
   ===================================================== */}
 
           <div
-            className={`
-      mt-1
-      flex
-      items-center
-      justify-between
-      border-t
-      ${background.border}
-      pt-2
-    `}
+            className={`mt-1 flex items-center justify-between border-t ${background.border} pt-2`}
           >
 
             <span
-              className="
-        text-[13px]
-        font-semibold
-        opacity-85
-      "
+              className="text-[13px] font-semibold opacity-85"
             >
               Grand Total
             </span>
 
             <span
-              className="
-        text-[15px]
-        font-bold
-        opacity-95
-      "
+              className="text-[15px] font-bold opacity-95"
             >
               ₹{calculation.grandTotal.toFixed(2)}
             </span>
@@ -3229,6 +2781,17 @@ async function printBillItems(
 
         </div>
 
+
+{liquorItems.length > 0 && (
+  <LiquorSummary
+  calculationLiquorVat={calculationLiquorVat}
+  discount={Number(billDraft.liquorDiscount || 0)}
+  discountPercent={Number(billDraft.liquorDiscountPercent || 0)}
+  billDraft={billDraft}
+  setBillDraft={setBillDraft}
+  background={background}
+/>
+)}
         {/* =================================================
           ERROR
       ================================================= */}
@@ -3236,15 +2799,7 @@ async function printBillItems(
         {error && (
 
           <div
-            className="
-            border-t
-            border-red-500/20
-            bg-red-500/5
-            px-3
-            py-2
-            text-sm
-            text-red-500
-          "
+            className="border-t border-red-500/20 bg-red-500/5 px-3 py-2 text-sm text-red-500"
           >
             {error}
           </div>
@@ -3255,16 +2810,7 @@ async function printBillItems(
           <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50">
 
             <div
-              className={`
-        w-full
-        max-w-md
-        rounded-2xl
-        border
-        ${background.border}
-        ${background.className}
-        p-6
-        shadow-2xl
-      `}
+              className={`w-full max-w-md rounded-2xl border ${background.border} ${background.className} p-6 shadow-2xl`}
             >
 
               <h2 className="text-lg font-bold">
@@ -3289,17 +2835,7 @@ async function printBillItems(
                   }}
                   placeholder="Enter cancellation reason..."
                   rows={4}
-                  className="
-            w-full
-            rounded-xl
-            border
-            bg-transparent
-            px-4
-            py-3
-            text-sm
-            outline-none
-            resize-none
-          "
+                  className="w-full rounded-xl border bg-transparent px-4 py-3 text-sm outline-none resize-none"
                 />
 
               </div>
@@ -3312,14 +2848,7 @@ async function printBillItems(
                     setShowCancelBillConfirm(false);
                     setCancelBillReason('');
                   }}
-                  className="
-            rounded-xl
-            border
-            px-5
-            py-2.5
-            text-sm
-            font-semibold
-          "
+                  className="rounded-xl border px-5 py-2.5 text-sm font-semibold"
                 >
                   Cancel
                 </button>
@@ -3332,15 +2861,7 @@ async function printBillItems(
                     handleCancel('CANCEL', cancelBillReason)
                     setShowCancelBillConfirm(false);
                   }}
-                  className="
-            rounded-xl
-            px-5
-            py-2.5
-            text-sm
-            font-semibold
-            text-white
-            disabled:opacity-50
-          "
+                  className="rounded-xl px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
                   style={{
                     backgroundColor: theme.primary,
                   }}
@@ -3356,7 +2877,1242 @@ async function printBillItems(
         )}
 
       </div>
-    </div>   {toastComponent}
+    </div>  
+     {toastComponent}
   </>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//=====================================================
+
+
+
+
+
+//   return (
+//     <>
+//     <div
+//   className={`
+//     flex
+//     h-full
+//     min-h-0
+//     flex-col
+//     overflow-hidden
+//     ${background.className}
+//     ${background.text}
+//   `}
+// >
+
+//       {/* =================================================
+//           HEADER
+//       ================================================= */}
+
+//       <div
+//         className={`
+//           shrink-0
+//           w-full
+//           border-b
+//           ${background.border}
+//           px-4
+//           py-2
+//           flex
+//           items-center
+//           justify-between
+//         `}
+//       >
+
+//         <div className="text-sm opacity-80">
+//           {currentTableName}
+//         </div>
+
+//         <div className="text-sm opacity-60">
+//           {billItems.length} items
+//         </div>
+
+//       </div>
+
+
+//       {/* =================================================
+//           ITEM LIST
+//       ================================================= */}
+
+// {/* =================================================
+//     ITEM LIST — USE ALL REMAINING SPACE
+// ================================================= */}
+
+// <div
+//   className={`
+//     flex-1
+//     min-h-0
+//     pb-6
+//     overflow-y-auto
+//     divide-y
+//     ${background.divide}
+//   `}
+// >
+//   {billItems.map((item) => (
+//     <BillItem
+//       key={item.id}
+//       item={item}
+//       processing={processing}
+//       onDecrease={decreaseBillItem}
+//       onIncrease={increaseBillItem}
+//       onDelete={handleDeleteBillItem}
+//       onMigrateSuccess={async () => {
+//         await loadBillItems();
+//       }}
+//     />
+//   ))}
+// </div>
+
+
+
+//     <div className="flex shrink-0 flex-col">
+//         {/* =================================================
+//           BILL BUTTONS
+//         ================================================= */}
+
+//         <div
+//           className="
+//     relative
+//     shrink-0
+//     px-2
+//     bg-zinc-800
+//     py-1
+//   "
+//         >
+
+//           {/* =================================================
+//       PAYMENT SUMMARY STRIP
+//   ================================================= */}
+
+//           {showPaymentSummary && (
+//             <div
+//               className="
+//         absolute
+//         bottom-[100%]
+//         left-2
+//         right-2
+//         mb-1
+//         z-40
+//         overflow-hidden
+//         rounded-t-md
+//         border
+//         border-zinc-600
+//         bg-zinc-900
+//         shadow-xl
+//       "
+//             >
+
+//               {/* HEADER */}
+
+         
+
+//               {/* PAYMENT BREAKDOWN */}
+
+//               <div
+//                 className="
+//           max-h-95
+//           overflow-y-auto
+//           px-3
+//           py-2
+//         "
+//               >
+
+//                 {/* CASH */}
+
+//                 {cashPaid > 0 && (
+//                   <div
+//                     className="
+//               flex
+//               items-center
+//               justify-between
+//               py-1
+//               text-xs
+//             "
+//                   >
+//                     <span className="text-zinc-400">
+//                       CASH
+//                     </span>
+
+//                     <span className="font-semibold text-white">
+//                       ₹{Number(cashPaid).toFixed(2)}
+//                     </span>
+//                   </div>
+//                 )}
+
+
+//                 {/* CARD */}
+
+//                 {cardPaid > 0 && (
+//                   <div
+//                     className="
+//               flex
+//               items-center
+//               justify-between
+//               py-1
+//               text-xs
+//             "
+//                   >
+//                     <span className="text-zinc-400">
+//                       CARD
+//                     </span>
+
+//                     <span className="font-semibold text-white">
+//                       ₹{Number(cardPaid).toFixed(2)}
+//                     </span>
+//                   </div>
+//                 )}
+
+
+//                 {/* UPI */}
+
+//                 {upiPaid > 0 && (
+//                   <div
+//                     className="
+//               flex
+//               items-center
+//               justify-between
+//               py-1
+//               text-xs
+//             "
+//                   >
+//                     <span className="text-zinc-400">
+//                       UPI
+//                     </span>
+
+//                     <span className="font-semibold text-white">
+//                       ₹{Number(upiPaid).toFixed(2)}
+//                     </span>
+//                   </div>
+//                 )}
+
+
+//                 {/* CREDIT */}
+
+//                 {/* {showPaymentAllocation && ( */}
+//                 <PaymentAllocation
+//                   totalAmount={calculation.grandTotal}
+//                   value={paymentAllocation}
+//                   onChange={setPaymentAllocation}
+//                   onPay={handlePaymentAllocation}
+//                   onCancel={() => {
+//                     setShowPaymentSummary(false);
+
+//                     setPaymentAllocation({
+//                       cash: 0,
+//                       card: 0,
+//                       upi: 0,
+//                       credit: 0,
+//                     });
+//                   }}
+//                 />
+//                 {/* )} */}
+
+//               </div>
+
+
+//               {/* TOTALS */}
+
+          
+
+//             </div>
+//           )}
+
+
+//           {/* =================================================
+//       PAYMENT STATUS BADGE
+//   ================================================= */}
+
+//           {(isPartialPayment || isCreditSale) && (
+//             <button
+//               type="button"
+//               onClick={() =>
+//                 setShowPaymentSummary(
+//                   (prev) => !prev
+//                 )
+//               }
+//               className="
+//         absolute
+//         bottom-[100%]
+//         left-1/2
+//         z-50
+//         flex
+//         -translate-x-1/2
+//         translate-y-[1px]
+//         items-center
+//         gap-1
+//         rounded-t-md
+//         border
+//         border-b-0
+//         border-zinc-600
+//         bg-zinc-800
+//         px-3
+//         py-1
+//         text-[10px]
+//         font-bold
+//         uppercase
+//         tracking-wide
+//         text-white
+//         shadow-md
+//         transition-colors
+//         hover:bg-zinc-700
+//       "
+//             >
+
+//               {/* UP ARROW */}
+
+//               <span
+//                 className={`
+//           text-[11px]
+//           transition-transform
+//           duration-200
+//           ${showPaymentSummary
+//                     ? 'rotate-180'
+//                     : ''
+//                   }
+//         `}
+//               >
+//                 ↑
+//               </span>
+
+
+//               {/* TITLE */}
+
+//               <span>
+//                 {isCreditSale
+//                   ? 'CREDIT + Mix Pay'
+//                   : 'PARTIAL'}
+//               </span>
+
+//             </button>
+//           )}
+
+
+//           {/* =================================================
+//       PAYMENT BUTTONS
+//   ================================================= */}
+//           <div className="flex items-center justify-between gap-2">
+//             <div className="flex items-center gap-2">
+
+//               {/* PRINT */}
+
+//               <button
+//                 type="button"
+//                 onClick={printBill}
+//                 className={`
+//         h-8
+//         w-fit
+//         rounded
+//         px-3
+//         text-xs
+//         font-semibold
+//         ${POS_THEME.BillButton}
+//       `}
+//               >
+//                 PRINT
+//               </button>
+
+
+//               {/* CASH */}
+
+//               <button
+//                 type="button"
+//                 onClick={() =>
+//                   handleCheckout('CASH')
+//                 }
+//                 disabled={
+//                   processing ||
+//                   billItems.length === 0
+//                 }
+//                 className="
+//         h-8
+//         w-fit
+//         rounded-md
+//         bg-green-600
+//         px-3
+//         text-xs
+//         font-semibold
+//         text-white
+//         transition-colors
+//         hover:bg-green-700
+//         disabled:cursor-not-allowed
+//         disabled:opacity-50
+//       "
+//               >
+//                 {processing
+//                   ? 'PROCESSING...'
+//                   : 'CASH'}
+//               </button>
+
+
+//               {/* CARD */}
+
+//               <button
+//                 type="button"
+//                 onClick={() =>
+//                   handleCheckout('CARD')
+//                 }
+//                 disabled={
+//                   processing ||
+//                   billItems.length === 0
+//                 }
+//                 className="
+//         h-8
+//         w-fit
+//         rounded-md
+//         bg-blue-600
+//         px-3
+//         text-xs
+//         font-semibold
+//         text-white
+//         transition-colors
+//         hover:bg-blue-700
+//         disabled:cursor-not-allowed
+//         disabled:opacity-50
+//       "
+//               >
+//                 CARD
+//               </button>
+
+
+//               {/* UPI */}
+
+//               <button
+//                 type="button"
+//                 onClick={() =>
+//                   handleCheckout('UPI')
+//                 }
+//                 disabled={
+//                   processing ||
+//                   billItems.length === 0
+//                 }
+//                 className="
+//         h-8
+//         w-fit
+//         rounded-md
+//         bg-purple-600
+//         px-3
+//         text-xs
+//         font-semibold
+//         text-white
+//         transition-colors
+//         hover:bg-purple-700
+//         disabled:cursor-not-allowed
+//         disabled:opacity-50
+//       "
+//               >
+//                 UPI
+//               </button>
+
+
+//               {/* MORE */}
+
+//               {/* =================================================
+//     MORE STATUS STRIP
+// ================================================= */}
+
+
+//               {/* MORE BUTTON */}
+//               <button
+//                 type="button"
+//                 onClick={() => setShowMoreMenu((prev) => !prev)}
+//                 className="
+//     absolute
+//     bottom-[100%]
+//     right-2
+//     z-50
+//     flex
+//     items-center
+//     gap-1
+//     rounded-t-md
+//     border
+//     border-b-0
+//     border-zinc-600
+//     bg-zinc-900
+//     px-3
+//     py-1
+//     text-[10px]
+//     font-bold
+//     uppercase
+//     tracking-wide
+//     text-white
+//     shadow-md
+//     transition-colors
+//     hover:bg-zinc-800
+//   "
+//               >
+//                 <span
+//                   className={`
+//       inline-block
+//       text-[11px]
+//       transition-transform
+//       duration-200
+//       ${showMoreMenu ? 'rotate-180' : ''}
+//     `}
+//                 >
+//                   ↑
+//                 </span>
+
+//                 <span>Complimentary</span>
+//               </button>
+
+//               {/* MORE MENU */}
+//               {showMoreMenu && (
+//                 <div
+//                   className="
+//       absolute
+//       bottom-[100%]
+//       right-2
+//       z-40
+//       mb-1
+//       w-48
+//       overflow-hidden
+//       rounded-t-md
+//       border
+//       border-zinc-600
+//       bg-zinc-900
+//       px-1
+//       pt-1
+//       pb-7
+//       shadow-xl
+//     "
+//                 >
+//                   {/* COMPLIMENTARY */}
+//                   <div className='flex  items-center
+//       justify-between border-b'>
+//                     <div className='text-md'> Complimentary</div>
+//                     <button
+//                       type="button"
+//                       onClick={() => {
+//                         setShowMoreMenu(false);
+//                         setShowComplimentaryMenu(true);
+//                       }}
+//                       className="
+//         flex
+//         w-full
+//         items-center
+//         rounded-sm
+//         px-3
+//         py-1.5
+//         text-left
+//         text-xs
+//         font-medium
+//         text-white
+//         transition-colors
+//         hover:bg-zinc-800
+//       "
+//                     >
+//                       X
+//                     </button></div>
+
+//                   {/* DRIVER */}
+//                   <button
+//                     type="button"
+//                     onClick={() => {
+//                       handleComplimentaryCheckout('DRIVER');
+//                       setShowMoreMenu(false);
+//                     }}
+//                     className="
+//         flex
+//         w-full
+//         items-center
+//         rounded-sm
+//         px-3
+//         py-1.5
+//         text-left
+//         text-xs
+//         font-medium
+//         text-white
+//         transition-colors
+//         hover:bg-zinc-800
+//       "
+//                   >
+//                     Driver
+//                   </button>
+
+//                   {/* FRIEND */}
+//                   <button
+//                     type="button"
+//                     onClick={() => {
+//                       handleComplimentaryCheckout('FRIEND');
+//                       setShowMoreMenu(false);
+//                     }}
+//                     className="
+//         flex
+//         w-full
+//         items-center
+//         rounded-sm
+//         px-3
+//         py-1.5
+//         text-left
+//         text-xs
+//         font-medium
+//         text-white
+//         transition-colors
+//         hover:bg-zinc-800
+//       "
+//                   >
+//                     Friend
+//                   </button>
+
+//                   {/* FAMILY */}
+//                   <button
+//                     type="button"
+//                     onClick={() => {
+//                       handleComplimentaryCheckout('FAMILY');
+//                       setShowMoreMenu(false);
+//                     }}
+//                     className="
+//         flex
+//         w-full
+//         items-center
+//         rounded-sm
+//         px-3
+//         py-1.5
+//         text-left
+//         text-xs
+//         font-medium
+//         text-white
+//         transition-colors
+//         hover:bg-zinc-800
+//       "
+//                   >
+//                     Family
+//                   </button>
+
+//                   {/* STAFF */}
+//                   <button
+//                     type="button"
+//                     onClick={() => {
+//                       handleComplimentaryCheckout('STAFF');
+//                       setShowMoreMenu(false);
+//                     }}
+//                     className="
+//         flex
+//         w-full
+//         items-center
+//         rounded-sm
+//         px-3
+//         py-1.5
+//         text-left
+//         text-xs
+//         font-medium
+//         text-white
+//         transition-colors
+//         hover:bg-zinc-800
+//       "
+//                   >
+//                     Staff
+//                   </button>
+
+//                   {/* OWNER */}
+//                   <button
+//                     type="button"
+//                     onClick={() => {
+//                       handleComplimentaryCheckout('OWNER');
+//                       setShowMoreMenu(false);
+//                     }}
+//                     className="
+//         flex
+//         w-full
+//         items-center
+//         rounded-sm
+//         px-3
+//         py-1.5
+//         text-left
+//         text-xs
+//         font-medium
+//         text-white
+//         transition-colors
+//         hover:bg-zinc-800
+//       "
+//                   >
+//                     Owner
+//                   </button>
+//                 </div>
+//               )}
+
+
+//             </div>
+
+//             {/* CASH */}
+
+//             <button
+//               type="button"
+//               onClick={() => {
+//                 setCancelBillReason('');
+//                 setShowCancelBillConfirm(true);
+//               }
+//               }
+//               disabled={
+//                 processing ||
+//                 billItems.length === 0
+//               }
+//               className="
+//         h-8
+//         w-fit
+//         rounded-md
+//         bg-green-600
+//         px-3
+//         text-xs
+//         font-semibold
+//         text-white
+//         transition-colors
+//         hover:bg-green-700
+//         disabled:cursor-not-allowed
+//         disabled:opacity-50
+//       "
+//             >
+//               {processing
+//                 ? 'PROCESSING...'
+//                 : 'CANCEL'}
+//             </button>
+//           </div>
+//           {/* KEEP YOUR EXISTING MORE MENU HERE */}
+
+//         </div>
+
+
+//         {/* =================================================
+//           CALCULATIONS   border-t
+//           ${background.border}
+//       ================================================= */}
+
+//         <div
+//           className={`
+//     space-y-1
+//     px-3
+//     py-2
+//     text-[12px]
+//   `}
+//         >
+//           {/* =====================================================
+//       SUBTOTAL
+//   ===================================================== */}
+
+//           <div
+//             className="
+//       flex
+//       items-center
+//       justify-between
+//       py-0.5
+//     "
+//           >
+//             <span className="opacity-55">
+//               Subtotal
+//             </span>
+
+//             <span className="font-medium opacity-75">
+//               ₹{calculation.itemSubtotal.toFixed(2)}
+//             </span>
+//           </div>
+
+
+//           {/* =====================================================
+//       TAX
+//   ===================================================== */}
+
+//           <div
+//             className="
+//       flex
+//       items-center
+//       justify-between
+//       py-0.5
+//     "
+//           >
+//             <span className="opacity-55">
+//               Tax
+//             </span>
+
+//             <span className="font-medium opacity-70">
+//               ₹{calculation.itemTax.toFixed(2)}
+//             </span>
+//           </div>
+
+
+//           {/* =====================================================
+//       DISCOUNT
+//   ===================================================== */}
+
+//           <div
+//             className="
+//       flex
+//       items-center
+//       justify-between
+//       gap-2
+//       py-1
+//     "
+//           >
+
+//             {/* LEFT */}
+
+//             <div
+//               className="
+//         flex
+//         min-w-0
+//         items-center
+//         gap-2
+//       "
+//             >
+
+//               <span className="shrink-0 opacity-55">
+//                 Discount
+//               </span>
+
+
+//               {/* FLAT */}
+
+//               <div
+//                 className={`
+//           flex
+//           h-7
+//           w-[68px]
+//           items-center
+//           rounded
+//           border
+//           ${background.border}
+//           bg-black/[0.025]
+//         `}
+//               >
+
+//                 <span className="pl-2 text-[10px] opacity-35">
+//                   ₹
+//                 </span>
+
+//                 <input
+//                   type="number"
+//                   min="0"
+//                   step="0.01"
+//                   value={discount === 0 ? '' : discount}
+//                   onChange={(e) => {
+
+//                     const value =
+//                       e.target.value === ''
+//                         ? 0
+//                         : Number(e.target.value);
+
+//                     setBillDraft({
+
+//                       ...billDraft,
+
+//                       discount: value,
+
+//                       discountPercent:
+//                         value > 0
+//                           ? 0
+//                           : billDraft.discountPercent,
+
+//                     });
+
+//                   }}
+//                   placeholder="0"
+//                   className={`
+//     h-full
+//     w-full
+//     bg-transparent
+//     px-1
+//     text-right
+//     text-[11px]
+//     ${background.text}
+//     outline-none
+
+//     [appearance:textfield]
+//     [&::-webkit-inner-spin-button]:appearance-none
+//     [&::-webkit-outer-spin-button]:appearance-none
+//   `}
+//                 />
+
+//               </div>
+
+
+//               {/* OR */}
+
+//               <span className="text-[9px] opacity-25">
+//                 OR
+//               </span>
+
+
+//               {/* PERCENT */}
+
+//               <div
+//                 className={`
+//           flex
+//           h-7
+//           w-[62px]
+//           items-center
+//           rounded
+//           border
+//           ${background.border}
+//           bg-black/[0.025]
+//         `}
+//               >
+
+//                 <input
+//                   type="number"
+//                   min="0"
+//                   max="100"
+//                   step="0.01"
+//                   value={
+//                     discountPercent === 0
+//                       ? ''
+//                       : discountPercent
+//                   }
+//                   onChange={(e) => {
+
+//                     const value =
+//                       e.target.value === ''
+//                         ? 0
+//                         : Number(e.target.value);
+
+//                     setBillDraft({
+
+//                       ...billDraft,
+
+//                       discountPercent: value,
+
+//                       discount:
+//                         value > 0
+//                           ? 0
+//                           : billDraft.discount,
+
+//                     });
+
+//                   }}
+//                   placeholder="0"
+//                   className={`
+//     h-full
+//     w-full
+//     bg-transparent
+//     px-1
+//     text-right
+//     text-[11px]
+//     ${background.text}
+//     outline-none
+
+//     [appearance:textfield]
+//     [&::-webkit-inner-spin-button]:appearance-none
+//     [&::-webkit-outer-spin-button]:appearance-none
+//   `}
+//                 />
+
+//                 <span className="pr-2 text-[10px] opacity-40">
+//                   %
+//                 </span>
+
+//               </div>
+
+//             </div>
+
+
+//             {/* CALCULATED DISCOUNT */}
+
+//             <span
+//               className="
+//         shrink-0
+//         font-medium
+//         opacity-70
+//       "
+//             >
+//               − ₹{calculation.discount.toFixed(2)}
+//             </span>
+
+//           </div>
+
+
+//           {/* =====================================================
+//       DELIVERY
+//   ===================================================== */}
+
+//           <div
+//             className="
+//       flex
+//       items-center
+//       justify-between
+//       gap-2
+//       py-1
+//     "
+//           >
+
+//             {/* LEFT */}
+
+//             <div
+//               className="
+//         flex
+//         items-center
+//         gap-2
+//       "
+//             >
+
+//               <span className="opacity-55">
+//                 Delivery
+//               </span>
+
+
+//               <div
+//                 className={`
+//           flex
+//           h-7
+//           w-[72px]
+//           items-center
+//           rounded
+//           border
+//           ${background.border}
+//           bg-black/[0.025]
+//         `}
+//               >
+
+//                 <span className="pl-2 text-[10px] opacity-35">
+//                   ₹
+//                 </span>
+
+//                 <input
+//                   type="number"
+//                   min="0"
+//                   step="0.01"
+//                   value={
+//                     deliveryFee === 0
+//                       ? ''
+//                       : deliveryFee
+//                   }
+//                   onChange={(e) => {
+
+//                     const value =
+//                       e.target.value === ''
+//                         ? 0
+//                         : Number(e.target.value);
+
+//                     setBillDraft({
+
+//                       ...billDraft,
+
+//                       deliveryFee:
+//                         value,
+
+//                     });
+
+//                   }}
+//                   placeholder="0"
+//                   className={`
+//     h-full
+//     w-full
+//     bg-transparent
+//     px-1
+//     text-right
+//     text-[11px]
+//     ${background.text}
+//     outline-none
+
+//     [appearance:textfield]
+//     [&::-webkit-inner-spin-button]:appearance-none
+//     [&::-webkit-outer-spin-button]:appearance-none
+//   `}
+//                 />
+
+//               </div>
+
+//             </div>
+
+
+//             {/* DELIVERY TOTAL */}
+
+//             <span
+//               className="
+//         shrink-0
+//         font-medium
+//         opacity-70
+//       "
+//             >
+//               ₹{calculation.deliveryFee.toFixed(2)}
+//             </span>
+
+//           </div>
+
+
+//           {/* =====================================================
+//       GRAND TOTAL
+//   ===================================================== */}
+
+//           <div
+//             className={`
+//       mt-1
+//       flex
+//       items-center
+//       justify-between
+//       border-t
+//       ${background.border}
+//       pt-2
+//     `}
+//           >
+
+//             <span
+//               className="
+//         text-[13px]
+//         font-semibold
+//         opacity-85
+//       "
+//             >
+//               Grand Total
+//             </span>
+
+//             <span
+//               className="
+//         text-[15px]
+//         font-bold
+//         opacity-95
+//       "
+//             >
+//               ₹{calculation.grandTotal.toFixed(2)}
+//             </span>
+
+//           </div>
+
+//         </div>
+
+//         {/* =================================================
+//           ERROR
+//       ================================================= */}
+
+//         {error && (
+
+//           <div
+//             className="
+//             border-t
+//             border-red-500/20
+//             bg-red-500/5
+//             px-3
+//             py-2
+//             text-sm
+//             text-red-500
+//           "
+//           >
+//             {error}
+//           </div>
+
+//         )}
+
+//         {showCancelBillConfirm && (
+//           <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50">
+
+//             <div
+//               className={`
+//         w-full
+//         max-w-md
+//         rounded-2xl
+//         border
+//         ${background.border}
+//         ${background.className}
+//         p-6
+//         shadow-2xl
+//       `}
+//             >
+
+//               <h2 className="text-lg font-bold">
+//                 Cancel Bill?
+//               </h2>
+
+//               <p className="mt-2 text-sm opacity-70">
+//                 Please enter a reason for cancelling this bill.
+//               </p>
+
+//               <div className="mt-5">
+
+//                 <label className="mb-2 block text-sm font-semibold">
+//                   Cancellation Reason
+//                 </label>
+
+//                 <textarea
+//                   value={cancelBillReason}
+//                   onChange={(e) => {
+//                     setCancelBillReason(e.target.value)
+
+//                   }}
+//                   placeholder="Enter cancellation reason..."
+//                   rows={4}
+//                   className="
+//             w-full
+//             rounded-xl
+//             border
+//             bg-transparent
+//             px-4
+//             py-3
+//             text-sm
+//             outline-none
+//             resize-none
+//           "
+//                 />
+
+//               </div>
+
+//               <div className="mt-6 flex justify-end gap-3">
+
+//                 <button
+//                   type="button"
+//                   onClick={() => {
+//                     setShowCancelBillConfirm(false);
+//                     setCancelBillReason('');
+//                   }}
+//                   className="
+//             rounded-xl
+//             border
+//             px-5
+//             py-2.5
+//             text-sm
+//             font-semibold
+//           "
+//                 >
+//                   Cancel
+//                 </button>
+
+//                 <button
+//                   type="button"
+//                   disabled={!cancelBillReason.trim()}
+//                   onClick={() => {
+//                     // We will connect the actual cancel API here next
+//                     handleCancel('CANCEL', cancelBillReason)
+//                     setShowCancelBillConfirm(false);
+//                   }}
+//                   className="
+//             rounded-xl
+//             px-5
+//             py-2.5
+//             text-sm
+//             font-semibold
+//             text-white
+//             disabled:opacity-50
+//           "
+//                   style={{
+//                     backgroundColor: theme.primary,
+//                   }}
+//                 >
+//                   Confirm Cancel
+//                 </button>
+
+//               </div>
+
+//             </div>
+
+//           </div>
+//         )}
+
+//       </div>
+//     </div>   {toastComponent}
+//   </>
+//   );

@@ -45,6 +45,8 @@ export type BillDraft = {
   customerPhone: string;
   discount: number;
   discountPercent: number;
+  liquorDiscount?: number;
+  liquorDiscountPercent?: number;
   deliveryFee: number;
   paymentMode:
     | "CASH"
