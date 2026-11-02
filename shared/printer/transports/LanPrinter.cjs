@@ -8,13 +8,13 @@ class LanPrinter {
     const TEST_MODE = true;
 
     if (TEST_MODE) {
-      // console.log('========== LAN PRINTER TEST MODE ==========');
+      console.log('========== LAN PRINTER TEST MODE ==========');
       // console.log('Printer connection skipped.');
       // console.log('Printer IP:', config?.ip || 'Not configured');
       // console.log('Printer port:', config?.port || 9100);
       // console.log('========== PRINT CONTENT ==========');
       // console.log(text);
-      // console.log('========== END PRINT CONTENT ==========');
+      console.log('========== END PRINT CONTENT ==========');
 
       // Simulate successful printing.
       return true;

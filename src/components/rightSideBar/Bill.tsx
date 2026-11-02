@@ -238,6 +238,8 @@ const { showToast, toastComponent } = useToast();
   const paymentMode =
     billDraft.paymentMode;
 
+    //console.log("discount ----------------------------", billDraft)
+
   // =====================================================
   // GROUP BILL ITEMS
   // =====================================================
@@ -331,12 +333,12 @@ const { showToast, toastComponent } = useToast();
       items: mappedItems,
       taxMode: 'PER_ITEM',
       discountFlat: discount,
-      discountPercent,
+      discountPercent: discountPercent,
       deliveryFee,
       deliveryTaxPercent: 0,
     });
 
-    //  console.log('=========================================');
+      console.log('result =========================================',result);
 
     return {
       itemSubtotal: fromPaise(result.itemSubtotalPaise),
@@ -371,6 +373,177 @@ const { showToast, toastComponent } = useToast();
       : dueAmount > 0
         ? 'PARTIAL'
         : 'PAID';
+
+
+
+
+
+
+  // =====================================================
+  // PRINT BILL ONLY
+  // =====================================================
+
+async function printBill() {
+  if (billItems.length === 0) {
+    showToast('No items to print');
+    return;
+  }
+
+    // DEBUG: Check taxCategory for every bill item
+  console.log('========== BILL ITEMS TAX CATEGORY ==========');
+
+  billItems.forEach((i, index) => {
+    console.log(`Item ${index + 1}:`, {
+      name: i.name,
+      taxCategory: i.taxCategory,
+      taxCategoryType: typeof i.taxCategory,
+      isNull: i.taxCategory === null,
+      isUndefined: i.taxCategory === undefined,
+    });
+  });
+
+  const regularItems = billItems.filter(
+    (i) => i.taxCategory == null || i.taxCategory !== 'LIQUOR_VAT'
+  );
+
+  const liquorItems = billItems.filter(
+    (i) => i.taxCategory === 'LIQUOR_VAT'
+  );
+
+  console.log('REGULAR GST ITEMS:', regularItems.map((i) => i.name));
+  console.log('LIQUOR VAT ITEMS:', liquorItems.map((i) => i.name));
+
+  try {
+    // Print the regular bill.
+    if (regularItems.length > 0) {
+      console.log('Printing regular GST bill');
+      await printRegularBill(regularItems);
+    }
+
+    // Print a second bill ONLY when VAT items exist.
+    if (liquorItems.length > 0) {
+      console.log('Printing liquor VAT bill');
+      await printLiquorVatBill(liquorItems);
+    } else {
+      console.log('No liquor VAT items. Skipping second bill.');
+    }
+  } catch (e: any) {
+    console.error('PRINT FAILED', e);
+    showToast(
+      'Print failed: ' + (e?.message || 'Unknown error'),
+      'error'
+    );
+  }
+}
+
+async function printRegularBill(regularItems: typeof billItems) {
+  if (regularItems.length === 0) return;
+
+    const numberResult =
+    await window.posApi.getOrCreateOrderNo(currentTableId);
+
+  if (!numberResult?.success || !numberResult.srno) {
+    throw new Error('Invoice number not reserved for this table.');
+  }
+
+  const actualBillNo = String(numberResult.srno);
+   const billType = 'GST';
+  await printBillItems(regularItems, actualBillNo, billType);
+}
+
+async function printLiquorVatBill(liquorItems: typeof billItems) {
+  if (liquorItems.length === 0) return;
+
+    const numberResult =
+    await window.posApi.getOrCreateLiquorVatOrderNo(currentTableId);
+
+if (!numberResult?.success || !numberResult.srno) {
+  throw new Error(
+    numberResult?.error || 'Liquor VAT invoice number not reserved.'
+  );
+}
+
+  const actualBillNo = String(numberResult.srno);
+  const billType = 'LIQUOR_VAT'
+  await printBillItems(liquorItems, actualBillNo, billType);
+}
+
+
+async function printBillItems(
+  items: typeof billItems,
+  actualBillNo: string,
+  billType: 'GST' | 'LIQUOR_VAT'
+) {
+  const itemSubtotal = items.reduce((total, i) => {
+    const price =
+      Number(i.basePrice || 0) +
+      Number(i.modifierTotal || 0);
+
+    const quantity = Number(i.quantity || 0);
+
+    return total + price * quantity;
+  }, 0);
+
+  const receiptData = {
+    billNo: actualBillNo,
+    billType,
+
+    orderNo: '',
+    tableNo: currentTableId,
+    tableName: currentTableName,
+    orderType: currentOrderType,
+    paymentMode,
+    createdAt: Date.now(),
+
+    items: items.map((i) => {
+      const price =
+        Number(i.basePrice || 0) +
+        Number(i.modifierTotal || 0);
+
+      const quantity = Number(i.quantity || 0);
+
+      return {
+        name: i.name,
+        quantity,
+        price,
+        subtotal: price * quantity,
+        modifiersJson: i.modifiersJson || '',
+        note: i.note || '',
+      };
+    }),
+
+    subtotal: itemSubtotal,
+    tax: calculation.itemTax,
+    discount: calculation.discount,
+    deliveryFee: calculation.deliveryFee,
+    deliveryTax: calculation.deliveryTax,
+    grandTotal: calculation.grandTotal,
+
+    customerName,
+    customerPhone,
+    kotNumberText: '',
+    stewardName: '',
+  };
+
+  console.log(`PRINTING ${billType} BILL:`, {
+    billNo: actualBillNo,
+    items: items.map((i) => i.name),
+    subtotal: itemSubtotal,
+  });
+
+  const res = await window.posApi.print({
+    role: 'BILL',
+    source: 'POS',
+    data: receiptData,
+  });
+
+  if (!res.success) {
+    throw new Error(res.error || `${billType} print failed`);
+  }
+}
+
+
+
 
 
 
@@ -1719,6 +1892,11 @@ const { showToast, toastComponent } = useToast();
     }
   }
 
+
+
+
+
+
   // =====================================================
   // PREVIEW BILL IMAGE
   // =====================================================
@@ -1906,168 +2084,6 @@ const { showToast, toastComponent } = useToast();
     }
   }
 
-  // =====================================================
-  // PRINT BILL ONLY
-  // =====================================================
-
-async function printBill() {
-  if (billItems.length === 0) {
-    showToast('No items to print');
-    return;
-  }
-
-    // DEBUG: Check taxCategory for every bill item
-  console.log('========== BILL ITEMS TAX CATEGORY ==========');
-
-  billItems.forEach((i, index) => {
-    console.log(`Item ${index + 1}:`, {
-      name: i.name,
-      taxCategory: i.taxCategory,
-      taxCategoryType: typeof i.taxCategory,
-      isNull: i.taxCategory === null,
-      isUndefined: i.taxCategory === undefined,
-    });
-  });
-
-  const regularItems = billItems.filter(
-    (i) => i.taxCategory == null || i.taxCategory !== 'LIQUOR_VAT'
-  );
-
-  const liquorItems = billItems.filter(
-    (i) => i.taxCategory === 'LIQUOR_VAT'
-  );
-
-  console.log('REGULAR GST ITEMS:', regularItems.map((i) => i.name));
-  console.log('LIQUOR VAT ITEMS:', liquorItems.map((i) => i.name));
-
-  try {
-    // Print the regular bill.
-    if (regularItems.length > 0) {
-      console.log('Printing regular GST bill');
-      await printRegularBill(regularItems);
-    }
-
-    // Print a second bill ONLY when VAT items exist.
-    if (liquorItems.length > 0) {
-      console.log('Printing liquor VAT bill');
-      await printLiquorVatBill(liquorItems);
-    } else {
-      console.log('No liquor VAT items. Skipping second bill.');
-    }
-  } catch (e: any) {
-    console.error('PRINT FAILED', e);
-    showToast(
-      'Print failed: ' + (e?.message || 'Unknown error'),
-      'error'
-    );
-  }
-}
-
-async function printRegularBill(regularItems: typeof billItems) {
-  if (regularItems.length === 0) return;
-
-    const numberResult =
-    await window.posApi.getOrCreateOrderNo(currentTableId);
-
-  if (!numberResult?.success || !numberResult.srno) {
-    throw new Error('Invoice number not reserved for this table.');
-  }
-
-  const actualBillNo = String(numberResult.srno);
-   const billType = 'GST';
-  await printBillItems(regularItems, actualBillNo, billType);
-}
-
-async function printLiquorVatBill(liquorItems: typeof billItems) {
-  if (liquorItems.length === 0) return;
-
-    const numberResult =
-    await window.posApi.getOrCreateLiquorVatOrderNo(currentTableId);
-
-if (!numberResult?.success || !numberResult.srno) {
-  throw new Error(
-    numberResult?.error || 'Liquor VAT invoice number not reserved.'
-  );
-}
-
-  const actualBillNo = String(numberResult.srno);
-  const billType = 'LIQUOR_VAT'
-  await printBillItems(liquorItems, actualBillNo, billType);
-}
-
-
-async function printBillItems(
-  items: typeof billItems,
-  actualBillNo: string,
-  billType: 'GST' | 'LIQUOR_VAT'
-) {
-  const itemSubtotal = items.reduce((total, i) => {
-    const price =
-      Number(i.basePrice || 0) +
-      Number(i.modifierTotal || 0);
-
-    const quantity = Number(i.quantity || 0);
-
-    return total + price * quantity;
-  }, 0);
-
-  const receiptData = {
-    billNo: actualBillNo,
-    billType,
-
-    orderNo: '',
-    tableNo: currentTableId,
-    tableName: currentTableName,
-    orderType: currentOrderType,
-    paymentMode,
-    createdAt: Date.now(),
-
-    items: items.map((i) => {
-      const price =
-        Number(i.basePrice || 0) +
-        Number(i.modifierTotal || 0);
-
-      const quantity = Number(i.quantity || 0);
-
-      return {
-        name: i.name,
-        quantity,
-        price,
-        subtotal: price * quantity,
-        modifiersJson: i.modifiersJson || '',
-        note: i.note || '',
-      };
-    }),
-
-    subtotal: itemSubtotal,
-    tax: 0,
-    discount: 0,
-    deliveryFee: 0,
-    deliveryTax: 0,
-    grandTotal: itemSubtotal,
-
-    customerName,
-    customerPhone,
-    kotNumberText: '',
-    stewardName: '',
-  };
-
-  console.log(`PRINTING ${billType} BILL:`, {
-    billNo: actualBillNo,
-    items: items.map((i) => i.name),
-    subtotal: itemSubtotal,
-  });
-
-  const res = await window.posApi.print({
-    role: 'BILL',
-    source: 'POS',
-    data: receiptData,
-  });
-
-  if (!res.success) {
-    throw new Error(res.error || `${billType} print failed`);
-  }
-}
 
 async function printBillItems_old(items: typeof billItems,actualBillNo) {
 

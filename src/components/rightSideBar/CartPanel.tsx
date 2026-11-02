@@ -169,7 +169,7 @@ const { showToast, toastComponent } = useToast();
       // =================================================
       // COMMON ITEM DATA
       // =================================================
-      console.log("cartData-----------------", cartData)
+     // console.log("cartData-----------------", cartData)
       const convertedCartData =
         cartData.map((item) => ({
 
@@ -315,7 +315,7 @@ const { showToast, toastComponent } = useToast();
 
         }));
 
-      console.log("Cart to convert convertedCartData--------------------------------", convertedCartData)
+    //  console.log("Cart to convert convertedCartData--------------------------------", convertedCartData)
       // =================================================
       // CREATE KOT BATCH
       // =================================================

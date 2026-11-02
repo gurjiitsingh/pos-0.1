@@ -202,8 +202,100 @@ function calculateBillAndroid(params) {
   };
 }
 
+
+
+function calculateBillLiquorVat(params) {
+  const {
+    items,
+    taxType = 'exclusive',
+    discountFlat = 0,
+    discountPercent = 0,
+  } = params;
+
+  // =====================================================
+  // ITEM SUBTOTAL
+  // =====================================================
+
+  const itemSubtotalPaise = items.reduce(
+    (sum, item) => sum + toPaise(item.basePrice) * item.quantity,
+    0
+  );
+
+  // =====================================================
+  // RAW VAT AND CESS
+  // =====================================================
+
+  let vatPaise = 0;
+  let cessPaise = 0;
+
+  for (const item of items) {
+    const basePaise = toPaise(item.basePrice);
+    const quantity = Number(item.quantity || 0);
+    const vatRate = Number(item.taxRate || 0);
+    const cessRate = Number(item.taxRate1 || 0);
+
+    let itemVatPaise = 0;
+    let itemCessPaise = 0;
+
+    if (taxType === 'exclusive') {
+      itemVatPaise = Math.round((basePaise * vatRate) / 100);
+      itemCessPaise = Math.round((basePaise * cessRate) / 100);
+    } else if (taxType === 'inclusive') {
+      const combinedRate = vatRate + cessRate;
+
+      if (combinedRate > 0) {
+        itemVatPaise = Math.round((basePaise * vatRate) / (100 + combinedRate));
+        itemCessPaise = Math.round((basePaise * cessRate) / (100 + combinedRate));
+      }
+    }
+
+    vatPaise += itemVatPaise * quantity;
+    cessPaise += itemCessPaise * quantity;
+  }
+
+  // =====================================================
+  // DISCOUNT
+  // =====================================================
+
+  const flatPaise = toPaise(discountFlat);
+  const percentPaise = Math.round((itemSubtotalPaise * discountPercent) / 100);
+
+  const discountPaise = flatPaise > 0 ? flatPaise : percentPaise;
+  const safeDiscountPaise = Math.min(discountPaise, itemSubtotalPaise);
+
+  const discountRatio = itemSubtotalPaise === 0 ? 0 : safeDiscountPaise / itemSubtotalPaise;
+
+  vatPaise = Math.round(vatPaise * (1 - discountRatio));
+  cessPaise = Math.round(cessPaise * (1 - discountRatio));
+
+  // =====================================================
+  // TOTAL TAX
+  // =====================================================
+
+  const totalTaxPaise = vatPaise + cessPaise;
+
+  // =====================================================
+  // GRAND TOTAL
+  // =====================================================
+
+  const grandTotalPaise = taxType === 'inclusive'
+    ? itemSubtotalPaise - safeDiscountPaise
+    : itemSubtotalPaise - safeDiscountPaise + totalTaxPaise;
+
+  return {
+    itemSubtotalPaise,
+    vatPaise,
+    cessPaise,
+    totalTaxPaise,
+    discountPaise: safeDiscountPaise,
+    grandTotalPaise,
+  };
+}
+
+
 module.exports = {
   calculateBillAndroid,
   fromPaise,
   toPaise,
+  calculateBillLiquorVat,
 };

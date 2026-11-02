@@ -95,7 +95,7 @@ export const CartProvider: React.FC<Props> = ({ children }) => {
 
     const rows =
       await posApi.getCartItems(key);
-      console.log("row cartitems------------------",rows)
+     // console.log("row cartitems------------------",rows)
 
     setCartData(
       rows as cartProductType[]

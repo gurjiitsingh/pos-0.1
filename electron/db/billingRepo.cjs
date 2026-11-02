@@ -16,6 +16,7 @@ const {
 
 const {
   calculateBillAndroid,
+  calculateBillLiquorVat,
 } = require('./billCalculation.cjs');
 
 const {
@@ -93,6 +94,10 @@ async function createBillFromKitchen(input) {
 }
 
 
+
+
+
+
 async function savOrder(input, items, billType) {
   console.log('[BILL SAVE] billType:', billType);
   console.log('[BILL SAVE] tableNo:', input?.tableNo);
@@ -168,63 +173,131 @@ async function savOrder(input, items, billType) {
   // ===================================================
 
   let mapping;
+  let srno;
+  let calculation;
 
-  if (billType === 'FOOD_GST') mapping = getOrCreateOrderNo(db, tableNo, TERMINAL_CODE);
-  else mapping = getOrCreateLiquorVatOrderNo(db, tableNo, TERMINAL_CODE);
-
-  const srno = mapping.srno;
-
-  // ===================================================
-  // CALCULATE ORDER ITEMS
-  // ===================================================
-
-  const calculationItems = kotItems.map((kot) => ({
-    productId: kot.productId || '',
-    name: kot.name || '',
-    quantity: Number(kot.quantity || 0),
-    basePrice: Number(kot.basePrice || 0),
-    taxRate: Number(kot.taxRate || 0),
-    taxType: (kot.taxType || 'exclusive').toLowerCase() === 'inclusive' ? 'inclusive' : 'exclusive',
-  }));
-
-  // ===================================================
-  // SAFE DISCOUNT / DELIVERY
-  // ===================================================
-
-  const safeDiscountInput = Math.max(0, Number(discountTotal || 0));
-  const safeDeliveryFee = Math.max(0, Number(deliveryFee || 0));
-
-  // ===================================================
-  // DELIVERY TAX PERCENT
-  // ===================================================
-
+  let safeDiscountInput = 0;
+  let safeDeliveryFee = 0;
   let deliveryTaxPercent = 0;
 
-  if (safeDeliveryFee > 0 && Number(deliveryTax || 0) > 0) {
-    deliveryTaxPercent = (Number(deliveryTax) / safeDeliveryFee) * 100;
+
+
+  if (billType === 'FOOD_GST') {
+
+    mapping = getOrCreateOrderNo(db, tableNo, TERMINAL_CODE);
+
+    srno = mapping.srno;
+
+    // ===================================================
+    // CALCULATE ORDER ITEMS
+    // ===================================================
+
+    const calculationItems = kotItems.map((kot) => ({
+      productId: kot.productId || '',
+      name: kot.name || '',
+      quantity: Number(kot.quantity || 0),
+      basePrice: Number(kot.basePrice || 0),
+      taxRate: Number(kot.taxRate || 0),
+      taxType: (kot.taxType || 'exclusive').toLowerCase() === 'inclusive' ? 'inclusive' : 'exclusive',
+    }));
+
+    // ===================================================
+    // SAFE DISCOUNT / DELIVERY
+    // ===================================================
+
+    safeDiscountInput = Math.max(0, Number(discountTotal || 0));
+    safeDeliveryFee = Math.max(0, Number(deliveryFee || 0));
+
+    // ===================================================
+    // DELIVERY TAX PERCENT
+    // ===================================================
+
+    deliveryTaxPercent = 0;
+
+    if (safeDeliveryFee > 0 && Number(deliveryTax || 0) > 0) {
+      deliveryTaxPercent = (Number(deliveryTax) / safeDeliveryFee) * 100;
+    }
+
+    // ===================================================
+    // ANDROID BILL CALCULATION
+    // ===================================================
+
+    calculation = calculateBillAndroid({
+      items: calculationItems,
+      taxMode: 'PER_ITEM',
+      discountFlat: safeDiscountInput,
+      discountPercent: 0,
+      deliveryFee: safeDeliveryFee,
+      deliveryTaxPercent: deliveryTaxPercent,
+    });
+
+
+  }
+  else {
+
+    mapping = getOrCreateLiquorVatOrderNo(db, tableNo, TERMINAL_CODE);
+
+
+    srno = mapping.srno;
+
+    // ===================================================
+    // CALCULATE ORDER ITEMS
+    // ===================================================
+
+    const calculationItems = kotItems.map((kot) => ({
+      productId: kot.productId || '',
+      name: kot.name || '',
+      quantity: Number(kot.quantity || 0),
+      basePrice: Number(kot.basePrice || 0),
+      taxRate: Number(kot.taxRate || 0),
+      taxRate1: Number(kot.taxRate1 || 0),
+      taxType: (kot.taxType || 'exclusive').toLowerCase() === 'inclusive' ? 'inclusive' : 'exclusive',
+    }));
+
+    // ===================================================
+    // SAFE DISCOUNT / DELIVERY
+    // ===================================================
+
+    safeDiscountInput = 0.0;//Math.max(0, Number(discountTotal || 0));
+    safeDeliveryFee = 0.0;//Math.max(0, Number(deliveryFee || 0));
+
+    // ===================================================
+    // DELIVERY TAX PERCENT
+    // ===================================================
+
+    deliveryTaxPercent = 0;
+
+    // if (safeDeliveryFee > 0 && Number(deliveryTax || 0) > 0) {
+    //   deliveryTaxPercent = (Number(deliveryTax) / safeDeliveryFee) * 100;
+    // }
+
+    // ===================================================
+    // ANDROID BILL CALCULATION
+    // ===================================================
+
+    calculation = calculateBillLiquorVat({
+      items: calculationItems,
+      taxType: calculationItems.every((item) => item.taxType === 'inclusive') ? 'inclusive' : 'exclusive',
+      discountFlat: safeDiscountInput,
+      discountPercent: 0,
+    });
+
   }
 
-  // ===================================================
-  // ANDROID BILL CALCULATION
-  // ===================================================
 
-  const calculation = calculateBillAndroid({
-    items: calculationItems,
-    taxMode: 'PER_ITEM',
-    discountFlat: safeDiscountInput,
-    discountPercent: 0,
-    deliveryFee: safeDeliveryFee,
-    deliveryTaxPercent: deliveryTaxPercent,
-  });
 
   // ===================================================
   // FINAL BILL TOTALS
   // ===================================================
 
   const itemTotal = calculation.itemSubtotalPaise / 100;
-  const itemTax = (calculation.exclusiveTaxPaise + calculation.inclusiveTaxPaise) / 100;
+
+  const itemTax = billType === 'FOOD_GST'
+    ? (calculation.exclusiveTaxPaise + calculation.inclusiveTaxPaise) / 100
+    : (calculation.vatPaise + calculation.cessPaise) / 100;
+
   const taxTotal = calculation.totalTaxPaise / 100;
-  const safeDeliveryTax = calculation.deliveryTaxPaise / 100;
+  const safeDeliveryTax = billType === 'FOOD_GST' ? calculation.deliveryTaxPaise / 100 : 0;
   const grandTotal = calculation.grandTotalPaise / 100;
   const safeDiscount = calculation.discountPaise / 100;
 
@@ -548,19 +621,19 @@ async function savOrder(input, items, billType) {
 }
 
 
-async function savOrder1(input,items,billType) {
+async function savOrder1(input, items, billType) {
 
-   console.log('[BILL SAVE] billType:', billType);
+  console.log('[BILL SAVE] billType:', billType);
   console.log('[BILL SAVE] tableNo:', input?.tableNo);
   console.log('[BILL SAVE] items:', items?.length);
- 
+
   const {
 
     // ===================================================
     // CORE
     // ===================================================
 
-    
+
     tableNo,
     orderType,
     tableName = '',
@@ -692,25 +765,25 @@ async function savOrder1(input,items,billType) {
   // Android-compatible order sequence
   // ===================================================
 
-let mapping;
+  let mapping;
 
-if (billType === 'FOOD_GST') {
-  mapping = getOrCreateOrderNo(
-    db,
-    tableNo,
-    TERMINAL_CODE
-  );
-} else if (billType === 'LIQUOR_VAT') {
-  mapping = getOrCreateLiquorVatOrderNo(
-    db,
-    tableNo,
-    TERMINAL_CODE
-  );
-} else {
-  throw new Error(`Invalid bill type: ${billType}`);
-}
+  if (billType === 'FOOD_GST') {
+    mapping = getOrCreateOrderNo(
+      db,
+      tableNo,
+      TERMINAL_CODE
+    );
+  } else if (billType === 'LIQUOR_VAT') {
+    mapping = getOrCreateLiquorVatOrderNo(
+      db,
+      tableNo,
+      TERMINAL_CODE
+    );
+  } else {
+    throw new Error(`Invalid bill type: ${billType}`);
+  }
 
-const srno = mapping.srno;
+  const srno = mapping.srno;
 
 
   // ===================================================
@@ -1748,23 +1821,23 @@ const srno = mapping.srno;
       // 4. CLEAR SERIAL MAPPING
       // =================================================
 
-   
-     
+
+
 
 
       if (billType === 'FOOD_GST') {
-    clearMapping(
-        db,
-        tableNo
-      );
-} else if (billType === 'LIQUOR_VAT') {
-  clearLiquorVatMapping(
-        db,
-        tableNo
-      );
-} else {
-  throw new Error(`Invalid bill type: ${billType}`);
-}
+        clearMapping(
+          db,
+          tableNo
+        );
+      } else if (billType === 'LIQUOR_VAT') {
+        clearLiquorVatMapping(
+          db,
+          tableNo
+        );
+      } else {
+        throw new Error(`Invalid bill type: ${billType}`);
+      }
 
 
       // =================================================
@@ -3275,7 +3348,7 @@ async function cancelBillFromKitchen(input) {
         db,
         tableNo
       );
-    clearLiquorVatMapping(
+      clearLiquorVatMapping(
         db,
         tableNo
       );

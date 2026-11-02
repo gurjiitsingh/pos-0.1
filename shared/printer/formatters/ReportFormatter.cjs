@@ -177,7 +177,7 @@ class ReportFormatter {
     }
 
     output.push(line);
-
+console.log("overview.totalDiscount----------------------------", overview.totalDiscount)
     // =====================================================
     // SALES SUMMARY
     // =====================================================
