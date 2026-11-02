@@ -5,7 +5,7 @@ import { useToast } from '@/hooks/useToast';
 import { groupBillItems } from '@/lib/billing/calculateBill';
 import { usePosSession } from '@/PosSessionStore/PosSessionContext';
 import { fromPaise } from '@/lib/pos/billing/money';
-import { calculateBillAndroid } from '@/lib/pos/billing/calculator';
+import { calculateBillAndroid, calculateBillLiquorVat } from '@/lib/pos/billing/calculator';
 import { POS_THEME } from '@/style/posTheme';
 import { usePosTheme } from '@/PosThemeStore/PosThemeContext';
 import PaymentAllocation, { PaymentAllocationValue } from './PaymentAllocationValue';
@@ -245,55 +245,37 @@ const { showToast, toastComponent } = useToast();
   // =====================================================
 
   const billItems = useMemo(() => {
-    // console.log(
-    //   '========== BILL ROWS BEFORE GROUPING =========='
-    // );
-
-    // billRows.forEach((item) => {
-    //   console.log(
-    //     'BILL ROW:',
-    //     item.name,
-    //     '| productId:',
-    //     item.productId,
-    //     '| discountEligible:',
-    //     item.discountEligible,
-    //     '| type:',
-    //     typeof item.discountEligible
-    //   );
-    // });
-
+ 
     const grouped = groupBillItems(billRows);
 
-    // console.log(
-    //   '========== BILL ITEMS AFTER GROUPING =========='
-    // );
-
-    // grouped.forEach((item) => {
-    //   console.log(
-    //     'GROUPED ITEM:',
-    //     item.name,
-    //     '| productId:',
-    //     item.productId,
-    //     '| discountEligible:',
-    //     item.discountEligible,
-    //     '| type:',
-    //     typeof item.discountEligible
-    //   );
-    // });
-
-    return grouped;
+   return grouped;
   }, [billRows]);
   // =====================================================
   // BILL CALCULATION
   // =====================================================
 
+  // =====================================================
+// SPLIT FOOD (GST) AND LIQUOR (VAT) ITEMS
+// =====================================================
 
+const { regularItems, liquorItems } = useMemo(() => {
+  const regular = billItems.filter(
+    (i) => i.taxCategory == null || i.taxCategory !== 'LIQUOR_VAT'
+  );
 
+  const liquor = billItems.filter(
+    (i) => i.taxCategory === 'LIQUOR_VAT'
+  );
 
+  return {
+    regularItems: regular,
+    liquorItems: liquor,
+  };
+}, [billItems]);
 
   const calculation = useMemo(() => {
 
-    const mappedItems = billItems.map((i) => ({
+    const mappedItems = regularItems.map((i) => ({
 
       productId: i.productId,
       name: i.name,
@@ -314,21 +296,6 @@ const { showToast, toastComponent } = useToast();
           : Boolean(i.discountEligible),
     }));
 
-    // console.log('========== BILL DISCOUNT DEBUG ==========');
-
-    // mappedItems.forEach((item) => {
-    //   console.log(
-    //     'BILL CALCULATION ITEM:',
-    //     item.name,
-    //     '| productId:',
-    //     item.productId,
-    //     '| discountEligible:',
-    //     item.discountEligible,
-    //     '| type:',
-    //     typeof item.discountEligible
-    //   );
-    // });
-
     const result = calculateBillAndroid({
       items: mappedItems,
       taxMode: 'PER_ITEM',
@@ -338,7 +305,7 @@ const { showToast, toastComponent } = useToast();
       deliveryTaxPercent: 0,
     });
 
-      console.log('result =========================================',result);
+      
 
     return {
       itemSubtotal: fromPaise(result.itemSubtotalPaise),
@@ -349,9 +316,53 @@ const { showToast, toastComponent } = useToast();
       grandTotal: fromPaise(result.grandTotalPaise),
       raw: result,
     };
-  }, [billItems, discount, discountPercent, deliveryFee]);
+  }, [regularItems, discount, discountPercent, deliveryFee]);
 
 
+  const calculationLiquorVat = useMemo(() => {
+
+    const mappedItems = liquorItems.map((i) => ({
+
+      productId: i.productId,
+      name: i.name,
+      quantity: Number(i.quantity || 0),
+      basePrice: Number(i.basePrice || 0),
+      taxRate: Number(i.taxRate || 0),
+      taxType: (i.taxType || 'exclusive') as
+        | 'inclusive'
+        | 'exclusive',
+
+      // SQLite INTEGER -> Boolean
+      // 0 = false, 1 = true
+      // Missing/null defaults to true
+
+      discountEligible:
+        i.discountEligible == null
+          ? true
+          : Boolean(i.discountEligible),
+    }));
+
+    const result = calculateBillLiquorVat({
+      items: mappedItems,
+      // taxMode: 'PER_ITEM',
+      discountFlat: discount,
+      discountPercent: discountPercent,
+      // deliveryFee,
+     // deliveryTaxPercent: 0,
+    });
+
+      
+
+    return {
+      itemSubtotal: fromPaise(result.itemSubtotalPaise),
+      itemTax: fromPaise(result.totalTaxPaise),
+      discount: fromPaise(result.discountPaise),
+      // deliveryFee: fromPaise(result.deliveryFeePaise),
+      // deliveryTax: fromPaise(result.deliveryTaxPaise),
+      grandTotal: fromPaise(result.grandTotalPaise),
+      raw: result,
+    };
+  }, [liquorItems, discount, discountPercent, deliveryFee]);
 
 
   // =====================================================
