@@ -19,7 +19,7 @@ export interface BillItemInput {
 
 export interface BillCalculationResult {
   itemSubtotalPaise: number;
-
+taxableAmountPaise:number;
   exclusiveTaxPaise: number;
   inclusiveTaxPaise: number;
   totalTaxPaise: number;

@@ -105,6 +105,8 @@ async function addCartItem(item, partition) {
         quantity,
         taxRate,
         taxType,
+        taxRate1,
+        taxType1,
         sessionId,
         tableId,
         tableName,
@@ -117,7 +119,7 @@ async function addCartItem(item, partition) {
         printStatus,
         createdAt
       ) VALUES (
-        ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
+        ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
       )`
     ).run(
       productId,
@@ -150,6 +152,10 @@ async function addCartItem(item, partition) {
       item.taxRate || 0,
 
       item.taxType || 'exclusive',
+
+        item.taxRate1 || 0,
+
+      item.taxType1 || 'exclusive',
 
       item.sessionId || 'DEFAULT',
 

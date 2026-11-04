@@ -1,8 +1,17 @@
 
 class BillFormatter80 {
+
+  constructor(taxCategory = 'FOOD_GST') {
+    this.taxCategory = String(taxCategory || 'FOOD_GST').toUpperCase();
+  }
+
   format(data = {}) {
     const WIDTH = 48;
     const line = '-'.repeat(WIDTH);
+
+    const taxCategory = String(
+  this.taxCategory || data.taxCategory || 'FOOD_GST'
+).toUpperCase();
 
     // =====================================================
 // PRINTER FONT
@@ -351,14 +360,22 @@ const FONT_A = '\x1B\x4D\x00';
 // Do not recalculate tax, discounts, or grand total.
 // Print the values supplied by the existing POS logic.
 // =====================================================
+//console.log("tax for print------------------------------",data)
 
 const subtotal = Number(data.subtotal ?? 0);
 const discount = Number(data.discount ?? 0);
 const deliveryFee = Number(data.deliveryFee ?? 0);
-const tax = Number(data.tax ?? 0);
+const vatRate = Number(data.vatRate);
+const cessRate = Number(data.cessRate);
+const vatPaise = Number(data.vatPaise ?? 0);
+const cessPaise = Number(data.cessPaise ?? 0);
+
+const vatPaiseForDisplay = Number(data.vatPaiseForDisplay ?? 0);
+const cessPaiseForDisplay = Number(data.cessPaiseForDisplay ?? 0);
+const tax = Number(data.itemTax ?? 0);
 const deliveryTax = Number(data.deliveryTax ?? 0);
 const grandTotal = Number(data.grandTotal ?? data.total ?? 0);
-
+const taxableAmountPaise = Number(data.taxableAmountPaise ?? 0);
 output.push(totalLine('Item Total', subtotal));
 
 if (deliveryFee > 0) {
@@ -377,22 +394,58 @@ if (discount > 0) {
 const itemTotal = subtotal;
 const roundOff = Number(data.roundOff ?? 0);
 
+
+// =====================================================
+// TAX SECTION
+// =====================================================
+
+ console.log("payload---------------------------", data)
+
+if(taxCategory === 'FOOD_GST'){
+
 if (tax > 0) {
   const halfTax = tax / 2;
 
   output.push(
     totalLine(
-      `CGST 2.5% on [${money(grandTotal)}]`,
+      `CGST 2.5% on [${money(taxableAmountPaise)}]`,
       halfTax
     )
   );
 
   output.push(
     totalLine(
-      `SGST 2.5% on [${money(grandTotal)}]`,
+      `SGST 2.5% on [${money(taxableAmountPaise)}]`,
       halfTax
     )
   );
+}
+}
+
+if(taxCategory === 'LIQUOR_VAT'){
+
+if ( vatPaiseForDisplay > 0) {
+  // output.push(
+  //   totalLine(
+  //     `VAT on [${money(grandTotal)}]`,
+  //     tax
+  //   )
+  // );
+    output.push(
+    totalLine(
+      `VAT [${vatRate}% on ${money(taxableAmountPaise)}]`,
+      vatPaiseForDisplay
+    )
+  );
+
+    output.push(
+    totalLine(
+      `Cess  [${cessRate}% on ${money(vatPaiseForDisplay)}]`,
+      cessPaiseForDisplay
+    )
+  );
+
+}
 }
 
 // if (deliveryTax > 0) {

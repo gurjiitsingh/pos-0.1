@@ -95,7 +95,7 @@ export const CartProvider: React.FC<Props> = ({ children }) => {
 
     const rows =
       await posApi.getCartItems(key);
-     // console.log("row cartitems------------------",rows)
+    // console.log("row cartitems------------------",rows)
 
     setCartData(
       rows as cartProductType[]
@@ -188,7 +188,7 @@ export const CartProvider: React.FC<Props> = ({ children }) => {
 
         productId: newProduct.productId,
         productMode: newProduct.productMode,
-        taxCategory:newProduct.taxCategory,
+        taxCategory: newProduct.taxCategory,
         currentStock: newProduct.currentStock ?? 0,
 
         name: newProduct.name,
@@ -208,6 +208,8 @@ export const CartProvider: React.FC<Props> = ({ children }) => {
 
         taxRate: Number(newProduct.taxRate ?? 0),
         taxType: newProduct.taxType ?? 'exclusive',
+        taxRate1: Number(newProduct.taxRate1 ?? 0),
+        taxType1: newProduct.taxType1 ?? 'exclusive',
 
         sessionId: newProduct.sessionId ?? 'DEFAULT',
 

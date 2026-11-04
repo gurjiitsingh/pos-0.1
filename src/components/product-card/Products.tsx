@@ -68,7 +68,7 @@ const { showToast, toastComponent } = useToast();
       try {
         const data: ProductType[] =
           await window.posApi.getAllProducts();
-          console.log("data---------------------",data)
+    
 
         // Keep the same sorting
         const sorted = [...data].sort(

@@ -26,6 +26,8 @@ function insertBillItems(items) {
       quantity,
       taxRate,
       taxType,
+       taxRate1,
+      taxType1,
       note,
       modifiersJson,
       status,
@@ -50,6 +52,8 @@ function insertBillItems(items) {
       @modifierTotal,
       @quantity,
       @taxRate,
+      @taxType1,
+        @taxRate1,
       @taxType,
       @note,
       @modifiersJson,
@@ -114,6 +118,8 @@ function insertBillItems(items) {
 
       taxRate: item.taxRate ?? 0,
       taxType: item.taxType ?? 'exclusive',
+      taxRate1: item.taxRate1 ?? 0,
+      taxType1: item.taxType1 ?? 'exclusive',
 
       note: item.note ?? '',
       modifiersJson: normalizedModifiers,

@@ -31,6 +31,7 @@ export function calculateBillAndroid(params: {
   deliveryFee?: number;
   deliveryTaxPercent?: number;
 }): BillCalculationResult {
+  
   const {
     items,
     taxMode = 'PER_ITEM',
@@ -60,7 +61,7 @@ export function calculateBillAndroid(params: {
   let eligibleExclusiveTaxPaise = 0;
   let eligibleInclusiveTaxPaise = 0;
 
-  const calculatedItems = items.map((item) => {
+    items.map((item) => {
     const basePaise = toPaise(item.basePrice);
     const quantity = Number(item.quantity || 0);
     const taxType = effectiveTaxType(taxMode, item.taxType);
@@ -84,18 +85,6 @@ export function calculateBillAndroid(params: {
       if (discountEligible) eligibleInclusiveTaxPaise += itemTaxPaise;
     }
 
-    return {
-      productId: item.productId,
-      name: item.name,
-      quantity,
-      basePricePaise: basePaise,
-      subtotalPaise: basePaise * quantity,
-      taxType,
-      taxRate: item.taxRate,
-      taxPerItemPaise,
-      taxPaise: itemTaxPaise,
-      discountEligible,
-    };
   });
 
   // DISCOUNT
@@ -107,6 +96,9 @@ export function calculateBillAndroid(params: {
     Math.max(0, requestedDiscountPaise),
     eligibleSubtotalPaise
   );
+
+   const taxableAmountPaise =
+    itemSubtotalPaise - safeDiscountPaise;
 
   const discountRatio = eligibleSubtotalPaise > 0
     ? safeDiscountPaise / eligibleSubtotalPaise
@@ -126,12 +118,13 @@ export function calculateBillAndroid(params: {
   // GRAND TOTAL
   const grandTotalPaise = itemSubtotalPaise - safeDiscountPaise
     + exclusiveTaxPaise + deliveryFeePaise + deliveryTaxPaise;
-    console.log("itemSubtotalPaise------------------------------", itemSubtotalPaise)
-    console.log(" totalTaxPaise------------------------------",  totalTaxPaise)
-console.log("grandtototal------------------------------", grandTotalPaise)
-return {
-    itemSubtotalPaise,
 
+  console.log("itemSubtotalPaise------------------------------", itemSubtotalPaise)
+  console.log(" totalTaxPaise------------------------------", totalTaxPaise)
+  console.log("grandtototal------------------------------", grandTotalPaise)
+  return {
+    itemSubtotalPaise,
+taxableAmountPaise,
     exclusiveTaxPaise,
 
     inclusiveTaxPaise,
@@ -147,6 +140,7 @@ return {
 
     grandTotalPaise,
   };
+  
 
 
 }
@@ -154,6 +148,7 @@ return {
 // =====================================================
 // LIQUOR VAT + CESS CALCULATION
 // =====================================================
+
 
 export function calculateBillLiquorVat(params: {
   items: BillItemInput[];
@@ -163,53 +158,85 @@ export function calculateBillLiquorVat(params: {
 }) {
   const {
     items,
-    taxType = 'exclusive',
     discountFlat = 0,
     discountPercent = 0,
   } = params;
 
   // ITEM SUBTOTAL
   const itemSubtotalPaise = items.reduce(
-    (sum, item) => sum + toPaise(item.basePrice) * item.quantity,
+    (sum, item) =>
+      sum + toPaise(item.basePrice) * Number(item.quantity || 0),
     0
   );
 
   // DISCOUNT-ELIGIBLE SUBTOTAL
   const eligibleSubtotalPaise = items.reduce(
-    (sum, item) => item.discountEligible === false
-      ? sum
-      : sum + toPaise(item.basePrice) * item.quantity,
+    (sum, item) =>
+      item.discountEligible === false
+        ? sum
+        : sum + toPaise(item.basePrice) * Number(item.quantity || 0),
     0
   );
 
-  // RAW VAT + CESS
+  // VAT + CESS
   let vatPaise = 0;
   let cessPaise = 0;
+
+  // DISPLAY ONLY
+  let vatPaiseForDisplay = 0;
+  let cessPaiseForDisplay = 0;
+
   let eligibleVatPaise = 0;
   let eligibleCessPaise = 0;
 
+  const vatRate = Number(items[0]?.taxRate || 0);
+  const cessRate = Number(items[0]?.taxRate1 || 0);
+
+  // CALCULATE FROM ITEMS
   const calculatedItems = items.map((item) => {
     const basePaise = toPaise(item.basePrice);
     const quantity = Number(item.quantity || 0);
-    const vatRate = Number(item.taxRate || 0);
-    const cessRate = Number(item.taxRate1 || 0);
 
+    const itemVatRate = Number(item.taxRate || 0);
+    const itemCessRate = Number(item.taxRate1 || 0);
+
+    // VAT FOR DISPLAY (INCLUSIVE AND EXCLUSIVE)
+    const itemVatPaiseForDisplay = Math.round(
+      basePaise * itemVatRate / 100
+    );
+
+    // CESS FOR DISPLAY (CALCULATED ON VAT)
+    const itemCessPaiseForDisplay = Math.round(
+      itemVatPaiseForDisplay * itemCessRate / 100
+    );
+
+    const totalVatPaiseForDisplay =
+      itemVatPaiseForDisplay * quantity;
+
+    const totalCessPaiseForDisplay =
+      itemCessPaiseForDisplay * quantity;
+
+    // ACCUMULATE DISPLAY TOTALS
+    vatPaiseForDisplay += totalVatPaiseForDisplay;
+    cessPaiseForDisplay += totalCessPaiseForDisplay;
+
+    // ACTUAL VAT AND CESS CALCULATION
     let itemVatPaise = 0;
     let itemCessPaise = 0;
 
-    if (taxType === 'exclusive') {
-      itemVatPaise = Math.round(basePaise * vatRate / 100);
-      itemCessPaise = Math.round(basePaise * cessRate / 100);
-    } else if (taxType === 'inclusive') {
-      const combinedRate = vatRate + cessRate;
-      if (combinedRate > 0) {
-        itemVatPaise = Math.round(basePaise * vatRate / (100 + combinedRate));
-        itemCessPaise = Math.round(basePaise * cessRate / (100 + combinedRate));
-      }
+    if (item.taxType === 'exclusive') {
+      itemVatPaise = Math.round(
+        basePaise * itemVatRate / 100
+      );
+
+      itemCessPaise = Math.round(
+        itemVatPaise * itemCessRate / 100
+      );
     }
 
     const totalVatPaise = itemVatPaise * quantity;
     const totalCessPaise = itemCessPaise * quantity;
+
     const discountEligible = item.discountEligible !== false;
 
     vatPaise += totalVatPaise;
@@ -220,58 +247,120 @@ export function calculateBillLiquorVat(params: {
       eligibleCessPaise += totalCessPaise;
     }
 
+    // RETURN INDIVIDUAL ITEM
     return {
       productId: item.productId,
       name: item.name,
       quantity,
+
       basePricePaise: basePaise,
       subtotalPaise: basePaise * quantity,
-      taxType,
-      vatRate,
-      cessRate,
+
+      vatRate: itemVatRate,
+      cessRate: itemCessRate,
+
       vatPerItemPaise: itemVatPaise,
       cessPerItemPaise: itemCessPaise,
+
       vatPaise: totalVatPaise,
       cessPaise: totalCessPaise,
+
+      vatPaiseForDisplay: totalVatPaiseForDisplay,
+      cessPaiseForDisplay: totalCessPaiseForDisplay,
+
       taxPaise: totalVatPaise + totalCessPaise,
+
       discountEligible,
     };
   });
 
   // DISCOUNT
   const flatPaise = toPaise(discountFlat);
-  const percentPaise = Math.round(eligibleSubtotalPaise * discountPercent / 100);
-  const requestedDiscountPaise = flatPaise > 0 ? flatPaise : percentPaise;
+
+  const percentPaise = Math.round(
+    eligibleSubtotalPaise * discountPercent / 100
+  );
+
+  const requestedDiscountPaise =
+    flatPaise > 0 ? flatPaise : percentPaise;
 
   const safeDiscountPaise = Math.min(
     Math.max(0, requestedDiscountPaise),
     eligibleSubtotalPaise
   );
 
-  const discountRatio = eligibleSubtotalPaise > 0
-    ? safeDiscountPaise / eligibleSubtotalPaise
-    : 0;
+  // TAXABLE AMOUNT AFTER DISCOUNT
+  const taxableAmountPaise =
+    itemSubtotalPaise - safeDiscountPaise;
 
-  vatPaise -= Math.round(eligibleVatPaise * discountRatio);
-  cessPaise -= Math.round(eligibleCessPaise * discountRatio);
+// REDUCE ACTUAL VAT AND CESS PROPORTIONATELY
+const discountRatio = eligibleSubtotalPaise > 0
+  ? safeDiscountPaise / eligibleSubtotalPaise
+  : 0;
+
+vatPaise -= Math.round(
+  eligibleVatPaise * discountRatio
+);
+
+cessPaise -= Math.round(
+  eligibleCessPaise * discountRatio
+);
+
+// REDUCE DISPLAY VAT AND CESS PROPORTIONATELY
+const eligibleDisplayVatPaise = calculatedItems
+  .filter(item => item.discountEligible)
+  .reduce(
+    (sum, item) => sum + item.vatPaiseForDisplay,
+    0
+  );
+
+const eligibleDisplayCessPaise = calculatedItems
+  .filter(item => item.discountEligible)
+  .reduce(
+    (sum, item) => sum + item.cessPaiseForDisplay,
+    0
+  );
+
+vatPaiseForDisplay -= Math.round(
+  eligibleDisplayVatPaise * discountRatio
+);
+
+cessPaiseForDisplay -= Math.round(
+  eligibleDisplayCessPaise * discountRatio
+);
 
   // TOTAL TAX
   const totalTaxPaise = vatPaise + cessPaise;
 
   // GRAND TOTAL
-  const grandTotalPaise = taxType === 'inclusive'
-    ? itemSubtotalPaise - safeDiscountPaise
-    : itemSubtotalPaise - safeDiscountPaise + totalTaxPaise;
+  const grandTotalPaise =
+    taxableAmountPaise + totalTaxPaise;
 
+  // RETURN COMPLETE BILL
   return {
     itemSubtotalPaise,
-    vatPaise,
-    cessPaise,
-    totalTaxPaise,
     discountPaise: safeDiscountPaise,
+    taxableAmountPaise,
+
+    vatRate,
+    vatPaise,
+
+    cessRate,
+    cessPaise,
+
+    // DISPLAY TOTALS BEFORE DISCOUNT
+    vatPaiseForDisplay,
+    cessPaiseForDisplay,
+
+    totalTaxPaise,
     grandTotalPaise,
+
     items: calculatedItems,
   };
 }
+
+
+
+
 
 export { fromPaise, toPaise };

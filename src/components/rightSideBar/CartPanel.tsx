@@ -10,7 +10,7 @@ import { ChefHat, CookingPot } from "lucide-react";
 import { usePosAuth } from "@/store/PosAuthContext";
 import { useToast } from '@/hooks/useToast';
 
- 
+
 
 export default function CartPanel() {
 
@@ -66,7 +66,7 @@ export default function CartPanel() {
 
   const [editingNoteId, setEditingNoteId] =
     useState<number | null>(null);
-const { showToast, toastComponent } = useToast();
+  const { showToast, toastComponent } = useToast();
   const [noteText, setNoteText] =
     useState('');
 
@@ -169,7 +169,7 @@ const { showToast, toastComponent } = useToast();
       // =================================================
       // COMMON ITEM DATA
       // =================================================
-     // console.log("cartData-----------------", cartData)
+      // console.log("cartData-----------------", cartData)
       const convertedCartData =
         cartData.map((item) => ({
 
@@ -267,7 +267,11 @@ const { showToast, toastComponent } = useToast();
           taxType:
             item.taxType || 'exclusive',
 
+          taxRate1:
+            Number(item.taxRate1 ?? 0),
 
+          taxType1:
+            item.taxType1 || 'exclusive',
           // ------------------------------------------------
           // NOTE
           // ------------------------------------------------
@@ -315,7 +319,7 @@ const { showToast, toastComponent } = useToast();
 
         }));
 
-    //  console.log("Cart to convert convertedCartData--------------------------------", convertedCartData)
+      //  console.log("Cart to convert convertedCartData--------------------------------", convertedCartData)
       // =================================================
       // CREATE KOT BATCH
       // =================================================
@@ -536,7 +540,7 @@ const { showToast, toastComponent } = useToast();
       //     type: typeof item.discountEligible,
       //   }))
       // );
-console.log("billitems---------------------",billItems)
+     
       await window.posApi.insertBillItems(
         billItems
       );
@@ -649,8 +653,8 @@ console.log("billitems---------------------",billItems)
 
   return (
     <>
-    <aside
-     className={`
+      <aside
+        className={`
   relative
   flex
   h-[93%]
@@ -661,14 +665,14 @@ console.log("billitems---------------------",billItems)
   ${background.className}
   ${background.text}
 `}
-    >
+      >
 
-      {/* =================================================
+        {/* =================================================
           HEADER
       ================================================= */}
 
-      <div
-        className={`
+        <div
+          className={`
           flex
           justify-between
           shrink-0
@@ -679,13 +683,13 @@ console.log("billitems---------------------",billItems)
           py-3
         
         `}
-      >
+        >
 
-        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
 
-          {activeOrder && (
-            <span
-              className="
+            {activeOrder && (
+              <span
+                className="
         rounded
         bg-zinc-300
         dark:bg-zinc-500
@@ -695,232 +699,232 @@ console.log("billitems---------------------",billItems)
         uppercase
         opacity-70
       "
-            >
-              {activeOrder.orderType.replace(
-                '_',
-                ' '
-              )}
+              >
+                {activeOrder.orderType.replace(
+                  '_',
+                  ' '
+                )}
+              </span>
+            )}
+
+            <p className="mt-1 text-xs font-medium">
+
+              {currentOrderName ??
+                'No order selected'}
+
+            </p>
+
+
+
+          </div>
+
+
+          <div className="flex items-center justify-between">
+
+            <span className="text-sm">
+
+              {cartData.length} items
+
             </span>
-          )}
 
-          <p className="mt-1 text-xs font-medium">
-
-            {currentOrderName ??
-              'No order selected'}
-
-          </p>
-
-
+          </div>
 
         </div>
 
 
-        <div className="flex items-center justify-between">
-
-          <span className="text-sm">
-
-            {cartData.length} items
-
-          </span>
-
-        </div>
-
-      </div>
-
-
-      {/* =================================================
+        {/* =================================================
           CONTENT
       ================================================= */}
 
-      <div
-        className="
+        <div
+          className="
           min-h-0
           flex-1
           overflow-y-auto
           app-scrollbar
         "
-      >
+        >
 
-        {cartData.length === 0 ? (
+          {cartData.length === 0 ? (
 
-          <div
-            className="
+            <div
+              className="
               flex
               h-full
               items-center
               justify-center
             "
-          >
-<div className='flex flex-col items-left'>
-        <p className=" gap-3 text-2xl md:text-4xl font-extrabold tracking-wide text-gray-700 dark:text-gray-200 text-center">
-  Your Cart Awaits
-</p>
-<p className="text-sm md:text-sm text-gray-500 dark:text-gray-400 text-center mt-2">
-  Add something delicious to get started!
-</p>
-</div>
-          </div>
+            >
+              <div className='flex flex-col items-left'>
+                <p className=" gap-3 text-2xl md:text-4xl font-extrabold tracking-wide text-gray-700 dark:text-gray-200 text-center">
+                  Your Cart Awaits
+                </p>
+                <p className="text-sm md:text-sm text-gray-500 dark:text-gray-400 text-center mt-2">
+                  Add something delicious to get started!
+                </p>
+              </div>
+            </div>
 
-        ) : (
+          ) : (
 
 
 
-          <div
-            className="
+            <div
+              className="
                 h-full
                 overflow-y-auto
                 app-scrollbar
               "
-          >
+            >
 
-            <div
-              className={`
+              <div
+                className={`
     divide-y
     ${background.divide}
   `}
-            >
-              {cartData.map((item) => (
+              >
+                {cartData.map((item) => (
 
-                <div
-                  key={`${item.productId}-${item.id}`}
-                  className={`
+                  <div
+                    key={`${item.productId}-${item.id}`}
+                    className={`
                       px-2
                       py-2
                       border-b
                       ${background.border}
                     `}
-                >
+                  >
 
-                  <div
-                    className="
+                    <div
+                      className="
                         flex
                         items-center
                         justify-between
                         gap-3
                       "
-                  >
+                    >
 
-                    {/* KITCHEN PRINT TOGGLE */}
+                      {/* KITCHEN PRINT TOGGLE */}
 
 
-                    <button
-                      type="button"
-                      title={
-                        item.kitchenPrintReq === false
-                          ? "Kitchen printing disabled"
-                          : "Kitchen printing enabled"
-                      }
-                      aria-label={
-                        item.kitchenPrintReq === false
-                          ? `Enable kitchen printing for ${item.name}`
-                          : `Disable kitchen printing for ${item.name}`
-                      }
-                      onClick={async () => {
-                        const nextKitchenPrint =
-                          item.kitchenPrintReq === false;
-
-                        const partition = item.tableId;
-
-                        if (!partition) {
-                          throw new Error("Table ID is missing");
+                      <button
+                        type="button"
+                        title={
+                          item.kitchenPrintReq === false
+                            ? "Kitchen printing disabled"
+                            : "Kitchen printing enabled"
                         }
-
-                        const result = await window.posApi.updateKitchenPrint({
-                          itemId: item.id,
-                          kitchenPrintReq: nextKitchenPrint,
-                          partition,
-                        });
-
-                        if (result?.success) {
-                          setCartData(
-                            result.data.map((cartItem: CartItem) => ({
-                              ...cartItem,
-                              kitchenPrintReq:
-                                cartItem.kitchenPrintReq == null
-                                  ? true
-                                  : Boolean(cartItem.kitchenPrintReq),
-                            }))
-                          );
-                        } else {
-                          console.error(
-                            "Failed to update kitchen printing:",
-                            result?.error
-                          );
+                        aria-label={
+                          item.kitchenPrintReq === false
+                            ? `Enable kitchen printing for ${item.name}`
+                            : `Disable kitchen printing for ${item.name}`
                         }
+                        onClick={async () => {
+                          const nextKitchenPrint =
+                            item.kitchenPrintReq === false;
+
+                          const partition = item.tableId;
+
+                          if (!partition) {
+                            throw new Error("Table ID is missing");
+                          }
+
+                          const result = await window.posApi.updateKitchenPrint({
+                            itemId: item.id,
+                            kitchenPrintReq: nextKitchenPrint,
+                            partition,
+                          });
+
+                          if (result?.success) {
+                            setCartData(
+                              result.data.map((cartItem: CartItem) => ({
+                                ...cartItem,
+                                kitchenPrintReq:
+                                  cartItem.kitchenPrintReq == null
+                                    ? true
+                                    : Boolean(cartItem.kitchenPrintReq),
+                              }))
+                            );
+                          } else {
+                            console.error(
+                              "Failed to update kitchen printing:",
+                              result?.error
+                            );
+                          }
 
 
-                      }}
-                      className={`
+                        }}
+                        className={`
     flex h-6 w-6 shrink-0
     items-center justify-center
     text-orange-500 transition-opacity
     ${item.kitchenPrintReq === false
-                          ? "opacity-25"
-                          : "opacity-100"
-                        }
+                            ? "opacity-25"
+                            : "opacity-100"
+                          }
   `}
-                    >
-                      <CookingPot size={15} />
-                    </button>
+                      >
+                        <CookingPot size={15} />
+                      </button>
 
 
-                    {/* =================================================
+                      {/* =================================================
                           NAME + NOTE
                       ================================================= */}
 
-                    <div
-                      className="
+                      <div
+                        className="
     min-w-0
     flex-1
   "
-                    >
+                      >
 
-                      {/* PRODUCT NAME */}
+                        {/* PRODUCT NAME */}
 
-                      <p
-                        className="
+                        <p
+                          className="
       truncate
       text-[10px]
       font-medium
   "
-                      >
-                        {item.name}
-                      </p>
+                        >
+                          {item.name}
+                        </p>
 
 
-                      {/* NOTE */}
+                        {/* NOTE */}
 
-                      {editingNoteId === item.id ? (
+                        {editingNoteId === item.id ? (
 
-                        <div
-                          className="
+                          <div
+                            className="
         mt-1
         flex
         flex-col
         gap-1
       "
-                        >
+                          >
 
-                          <input
-                            type="text"
-                            autoFocus
-                            value={noteText}
-                            onChange={(e) =>
-                              setNoteText(e.target.value)
-                            }
-                            onKeyDown={(e) => {
-
-                              if (e.key === 'Enter') {
-                                saveItemNote(item);
+                            <input
+                              type="text"
+                              autoFocus
+                              value={noteText}
+                              onChange={(e) =>
+                                setNoteText(e.target.value)
                               }
+                              onKeyDown={(e) => {
 
-                              if (e.key === 'Escape') {
-                                cancelEditingNote();
-                              }
+                                if (e.key === 'Enter') {
+                                  saveItemNote(item);
+                                }
 
-                            }}
-                            placeholder="Customer note..."
-                            className={`
+                                if (e.key === 'Escape') {
+                                  cancelEditingNote();
+                                }
+
+                              }}
+                              placeholder="Customer note..."
+                              className={`
           w-full
           rounded
           border
@@ -931,159 +935,159 @@ console.log("billitems---------------------",billItems)
           text-[10px]
           outline-none
         `}
-                          />
+                            />
 
-                          <div
-                            className="
+                            <div
+                              className="
           flex
           items-center
           gap-3
         "
-                          >
+                            >
 
-                            <button
-                              type="button"
-                              onClick={() =>
-                                saveItemNote(item)
-                              }
-                              className="
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  saveItemNote(item)
+                                }
+                                className="
             text-[9px]
             font-semibold
             opacity-80
             hover:opacity-100
           "
-                            >
-                              SAVE
-                            </button>
+                              >
+                                SAVE
+                              </button>
 
-                            <button
-                              type="button"
-                              onClick={
-                                cancelEditingNote
-                              }
-                              className="
+                              <button
+                                type="button"
+                                onClick={
+                                  cancelEditingNote
+                                }
+                                className="
             text-[9px]
             opacity-50
             hover:opacity-100
           "
-                            >
-                              CANCEL
-                            </button>
+                              >
+                                CANCEL
+                              </button>
+
+                            </div>
 
                           </div>
 
-                        </div>
+                        ) : (
 
-                      ) : (
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            startEditingNote(item)
-                          }
-                          className="
+                          <button
+                            type="button"
+                            onClick={() =>
+                              startEditingNote(item)
+                            }
+                            className="
         mt-0.5
         block
         max-w-full
         text-left
       "
-                        >
+                          >
 
-                          {item.note ? (
+                            {item.note ? (
 
-                            <span
-                              className="
+                              <span
+                                className="
             block
             truncate
             text-[9px]
             opacity-60
           "
-                            >
-                              📝 {item.note}
-                            </span>
+                              >
+                                📝 {item.note}
+                              </span>
 
-                          ) : (
+                            ) : (
 
-                            <span
-                              className="
+                              <span
+                                className="
             text-[9px]
             opacity-40
             hover:opacity-80
           "
-                            >
-                              + Add note
-                            </span>
+                              >
+                                + Add note
+                              </span>
 
-                          )}
+                            )}
 
-                        </button>
+                          </button>
 
-                      )}
+                        )}
 
-                    </div>
+                      </div>
 
 
-                    {/* =================================================
+                      {/* =================================================
                           UNIT PRICE
                       ================================================= */}
 
-                    <p
-                      className="
+                      <p
+                        className="
                           shrink-0
                           whitespace-nowrap
                           text-[9px]
                           opacity-70
                         "
-                    >
-
-                      ₹
-                      {Number(
-                        item.finalPrice ?? 0
-                      ).toFixed(2)}
-
-                    </p>
-
-
-                    {/* =================================================
-                          AMOUNT + QTY
-                      ================================================= */}
-
-                    <div
-                      className="
-                          flex
-                          shrink-0
-                          items-center
-                          gap-2
-                        "
-                    >
-
-                      <p
-                        className="
-                            whitespace-nowrap
-                            text-sm
-                            font-semibold
-                          "
                       >
 
                         ₹
-                        {(
-                          Number(
-                            item.finalPrice ?? 0
-                          ) *
-                          Number(
-                            item.quantity ?? 0
-                          )
+                        {Number(
+                          item.finalPrice ?? 0
                         ).toFixed(2)}
 
                       </p>
 
 
                       {/* =================================================
+                          AMOUNT + QTY
+                      ================================================= */}
+
+                      <div
+                        className="
+                          flex
+                          shrink-0
+                          items-center
+                          gap-2
+                        "
+                      >
+
+                        <p
+                          className="
+                            whitespace-nowrap
+                            text-sm
+                            font-semibold
+                          "
+                        >
+
+                          ₹
+                          {(
+                            Number(
+                              item.finalPrice ?? 0
+                            ) *
+                            Number(
+                              item.quantity ?? 0
+                            )
+                          ).toFixed(2)}
+
+                        </p>
+
+
+                        {/* =================================================
                             QUANTITY CONTROL
                         ================================================= */}
 
-                      <div
-                        className={`
+                        <div
+                          className={`
                             flex
                             w-fit
                             items-center
@@ -1091,14 +1095,14 @@ console.log("billitems---------------------",billItems)
                             border
                             ${background.border}
                           `}
-                      >
+                        >
 
-                        <button
-                          type="button"
-                          onClick={() =>
-                            decCartProduct(item)
-                          }
-                          className="
+                          <button
+                            type="button"
+                            onClick={() =>
+                              decCartProduct(item)
+                            }
+                            className="
                               flex
                               h-5
                               w-5
@@ -1108,32 +1112,32 @@ console.log("billitems---------------------",billItems)
                               transition
                               hover:opacity-100
                             "
-                        >
-                          −
-                        </button>
+                          >
+                            −
+                          </button>
 
 
-                        <span
-                          className="
+                          <span
+                            className="
                               w-6
                               text-center
                               text-[10px]
                               font-medium
                             "
-                        >
-                          {item.quantity}
-                        </span>
+                          >
+                            {item.quantity}
+                          </span>
 
 
-                        <button
-                          type="button"
-                          onClick={() =>
-                            addProductToCart({
-                              ...item,
-                              quantity: 1,
-                            })
-                          }
-                          className="
+                          <button
+                            type="button"
+                            onClick={() =>
+                              addProductToCart({
+                                ...item,
+                                quantity: 1,
+                              })
+                            }
+                            className="
                               flex
                               h-5
                               w-5
@@ -1143,9 +1147,11 @@ console.log("billitems---------------------",billItems)
                               transition
                               hover:opacity-100
                             "
-                        >
-                          +
-                        </button>
+                          >
+                            +
+                          </button>
+
+                        </div>
 
                       </div>
 
@@ -1153,31 +1159,29 @@ console.log("billitems---------------------",billItems)
 
                   </div>
 
-                </div>
+                ))}
 
-              ))}
+              </div>
 
             </div>
 
-          </div>
+
+
+          )}
+
+        </div>
 
 
 
-        )}
-
-      </div>
-
-
-
-{/* =================================================
+        {/* =================================================
     BOTTOM AREA — SEND + TOTAL
 ================================================= */}
 
-<div className="mt-auto shrink-0">
+        <div className="mt-auto shrink-0">
 
-  {/* ACTION BAR */}
-  <div
-    className={`
+          {/* ACTION BAR */}
+          <div
+            className={`
       shrink-0
       border-t
       ${background.border}
@@ -1185,24 +1189,24 @@ console.log("billitems---------------------",billItems)
       py-2
       shadow-sm
     `}
-  >
-    <div className="grid grid-cols-3 gap-2">
-      <button
-        type="button"
-        onClick={sendToKitchenHandle}
-        disabled={cartData.length === 0}
-        style={{
-          backgroundColor:
-            cartData.length === 0
-              ? '#e3a246'
-              : '#87b52d',
-              // : theme.primary,
-          color:
-            cartData.length === 0
-              ? '#4d4b4a'
-              : '#262644',
-        }}
-        className="
+          >
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={sendToKitchenHandle}
+                disabled={cartData.length === 0}
+                style={{
+                  backgroundColor:
+                    cartData.length === 0
+                      ? '#e3a246'
+                      : '#87b52d',
+                  // : theme.primary,
+                  color:
+                    cartData.length === 0
+                      ? '#4d4b4a'
+                      : '#262644',
+                }}
+                className="
           h-8
           rounded-lg
           text-xs
@@ -1212,44 +1216,44 @@ console.log("billitems---------------------",billItems)
           active:opacity-80
           disabled:cursor-not-allowed
         "
-      >
-        SEND
-      </button>
-    </div>
-  </div>
+              >
+                SEND
+              </button>
+            </div>
+          </div>
 
-  {/* TOTAL FOOTER */}
-  <div
-    className={`
+          {/* TOTAL FOOTER */}
+          <div
+            className={`
       shrink-0
       border-t
       ${background.border}
       px-4
       py-2
     `}
-  >
-    <div
-      className="
+          >
+            <div
+              className="
         flex
         items-center
         justify-between
         text-base
         font-semibold
       "
-    >
-      <span>Total</span>
+            >
+              <span>Total</span>
 
-      <span>
-        ₹{productTotalCost.toFixed(2)}
-      </span>
-    </div>
-  </div>
+              <span>
+                ₹{productTotalCost.toFixed(2)}
+              </span>
+            </div>
+          </div>
 
-</div>
+        </div>
 
 
-    </aside>
-        {toastComponent}
-  </>
+      </aside>
+      {toastComponent}
+    </>
   );
 }

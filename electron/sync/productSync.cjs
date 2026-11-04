@@ -37,7 +37,7 @@ async function syncProducts() {
   const list = snapshot.docs.map((doc) => {
     const data = doc.data() || {};
 
-    console.log("taxCategory-----------------------",data.name, data.taxCategory)
+    
   return {
   id: doc.id,
 
@@ -107,14 +107,8 @@ async function syncProducts() {
       ? data.taxRate1
       : null,
 
-
   taxType1:
     data.taxType1 || null,
-
-
-
-  type: data.type || null,
-
 
   type: data.type || null,
 

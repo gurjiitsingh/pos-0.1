@@ -28,6 +28,9 @@ export type ProductType = {
   taxRate: number | undefined;
   taxType: 'inclusive' | 'exclusive' | undefined;
 
+  taxRate1: number | undefined;
+  taxType1: 'inclusive' | 'exclusive' | undefined;
+
   parentId?: string;
   hasVariants?: boolean;
   hasModifier?: boolean;

@@ -168,7 +168,7 @@ const { showToast, toastComponent } = useToast();
         await window.posApi.getBillItems(
           currentTableId
         );
- 
+ console.log("bill---------------------", billRows)
       // =============================================
       // CART ITEMS
       //
@@ -312,13 +312,14 @@ const { regularItems, liquorItems } = useMemo(() => {
       deliveryFee,
       deliveryTaxPercent: 0,
     });
-
-      
+      console.log("this is food cal data ------------------------------",result)
 
     return {
       itemSubtotal: fromPaise(result.itemSubtotalPaise),
+
       itemTax: fromPaise(result.totalTaxPaise),
       discount: fromPaise(result.discountPaise),
+      taxableAmount: fromPaise(result.taxableAmountPaise),
       deliveryFee: fromPaise(result.deliveryFeePaise),
       deliveryTax: fromPaise(result.deliveryTaxPaise),
       grandTotal: fromPaise(result.grandTotalPaise),
@@ -335,8 +336,12 @@ const calculationLiquorVat = useMemo(() => {
     name: i.name,
     quantity: Number(i.quantity || 0),
     basePrice: Number(i.basePrice || 0),
-    taxRate: Number(i.taxRate || 0),
+
+    taxRate: Number(i.taxRate || 0),   // VAT
+    taxRate1: Number(i.taxRate1 || 0), // CESS
+
     taxType: (i.taxType || 'exclusive') as 'inclusive' | 'exclusive',
+
     discountEligible:
       i.discountEligible == null
         ? true
@@ -348,12 +353,26 @@ const calculationLiquorVat = useMemo(() => {
     discountFlat: liquorDiscount,
     discountPercent: liquorDiscountPercent,
   });
-
+    
+  
+  console.log("liqu data-------------------------------", result)
   return {
     itemSubtotal: fromPaise(result.itemSubtotalPaise),
-    itemTax: fromPaise(result.totalTaxPaise),
     discount: fromPaise(result.discountPaise),
+
+    taxableAmount: fromPaise(result.taxableAmountPaise),
+
+    vatRate: result.vatRate,
+    vat: fromPaise(result.vatPaise),
+    vatPaiseForDisplay : fromPaise(result.vatPaiseForDisplay),
+    cessPaiseForDisplay : fromPaise(result.cessPaiseForDisplay),
+    cessRate: result.cessRate,
+    cess: fromPaise(result.cessPaise),
+
+    itemTax: fromPaise(result.totalTaxPaise),
+
     grandTotal: fromPaise(result.grandTotalPaise),
+
     raw: result,
   };
 }, [liquorItems, liquorDiscount, liquorDiscountPercent]);
@@ -376,11 +395,6 @@ const calculationLiquorVat = useMemo(() => {
       : dueAmount > 0
         ? 'PARTIAL'
         : 'PAID';
-
-
-
-
-
 
   // =====================================================
   // PRINT BILL ONLY
@@ -450,7 +464,7 @@ async function printRegularBill(regularItems: typeof billItems) {
   }
 
   const actualBillNo = String(numberResult.srno);
-   const billType = 'GST';
+   const billType = 'FOOD_GST';
   await printBillItems(regularItems, actualBillNo, billType);
 }
 
@@ -475,7 +489,7 @@ if (!numberResult?.success || !numberResult.srno) {
 async function printBillItems(
   items: typeof billItems,
   actualBillNo: string,
-  billType: 'GST' | 'LIQUOR_VAT'
+  billType: 'FOOD_GST' | 'LIQUOR_VAT'
 ) {
   const itemSubtotal = items.reduce((total, i) => {
     const price =
@@ -487,7 +501,11 @@ async function printBillItems(
     return total + price * quantity;
   }, 0);
 
-  const receiptData = {
+let  receiptData;
+console.log("billType 1--------------------------------",billType)
+  if(billType === 'FOOD_GST'){
+console.log("billType 2--------------------------------",billType)
+   receiptData = {
     billNo: actualBillNo,
     billType,
 
@@ -516,7 +534,8 @@ async function printBillItems(
     }),
 
     subtotal: itemSubtotal,
-    tax: calculation.itemTax,
+    taxableAmountPaise: calculation.taxableAmount,
+    itemTax: calculation.itemTax,
     discount: calculation.discount,
     deliveryFee: calculation.deliveryFee,
     deliveryTax: calculation.deliveryTax,
@@ -528,6 +547,65 @@ async function printBillItems(
     stewardName: '',
   };
 
+
+
+
+}
+
+  if(billType === 'LIQUOR_VAT'){
+
+    console.log("calculationLiquorVat----------------------------",calculationLiquorVat)
+
+  receiptData = {
+    billNo: actualBillNo,
+    billType,
+
+    orderNo: '',
+    tableNo: currentTableId,
+    tableName: currentTableName,
+    orderType: currentOrderType,
+    paymentMode,
+    createdAt: Date.now(),
+
+    items: items.map((i) => {
+      const price =
+        Number(i.basePrice || 0) +
+        Number(i.modifierTotal || 0);
+
+      const quantity = Number(i.quantity || 0);
+
+      return {
+        name: i.name,
+        quantity,
+        price,
+        subtotal: price * quantity,
+        modifiersJson: i.modifiersJson || '',
+        note: i.note || '',
+      };
+    }),
+
+    subtotal: itemSubtotal,
+    taxableAmountPaise: calculationLiquorVat.taxableAmount,
+    vatRate:calculationLiquorVat.vatRate,
+    cessRate:calculationLiquorVat.cessRate,
+    vatPaise:calculationLiquorVat.vat,
+    cessPaise: calculationLiquorVat.cess,
+     vatPaiseForDisplay : calculationLiquorVat.vatPaiseForDisplay,
+    cessPaiseForDisplay : calculationLiquorVat.cessPaiseForDisplay,
+    itemTax: calculationLiquorVat.itemTax,
+    discount: calculationLiquorVat.discount,
+    deliveryFee: 0,
+    deliveryTax: 0,
+    grandTotal: calculationLiquorVat.grandTotal,
+
+    customerName,
+    customerPhone,
+    kotNumberText: '',
+    stewardName: '',
+  };
+}
+
+
   console.log(`PRINTING ${billType} BILL:`, {
     billNo: actualBillNo,
     items: items.map((i) => i.name),
@@ -538,6 +616,7 @@ async function printBillItems(
     role: 'BILL',
     source: 'POS',
     data: receiptData,
+    taxCategory: billType,
   });
 
   if (!res.success) {
@@ -549,6 +628,161 @@ async function printBillItems(
 
 
 
+  // =====================================================
+  // FINALIZE BILL
+  // =====================================================
+
+ async function handleCheckout(
+  selectedPaymentMode: 'CASH' | 'CARD' | 'UPI' | 'CANCEL'
+) {
+  if (processing) return;
+
+  if (billItems.length === 0) {
+    setError('No items in bill');
+    return;
+  }
+
+  if (!currentTableId) {
+    setError('No table selected');
+    return;
+  }
+
+  try {
+    setProcessing(true);
+    setError(null);
+
+    // =================================================
+    // 1. CALCULATE FINAL TOTAL
+    // =================================================
+
+    const totalAmount = Number(calculation.grandTotal) || 0; 
+
+    // =================================================
+    // 2. CREATE BILL
+    // =================================================
+
+    const result = await window.posApi.createBill({
+      tableNo: currentTableId,
+      tableName: currentTableName,
+      orderType: currentOrderType,
+
+        // Send both complete calculation objects
+      calculation,
+      calculationLiquorVat,
+
+      customerName: customerName.trim() || 'Customer',
+      customerPhone: customerPhone.trim(),
+
+      discountTotal: calculation.discount,
+      deliveryFee: calculation.deliveryFee,
+      deliveryTax: calculation.deliveryTax,
+
+      // =============================================
+      // USER SNAPSHOT
+      // =============================================
+
+      finalizedById: currentUser?.userId || '',
+      finalizedByName: currentUser?.fullName || '',
+
+      // =============================================
+      // PAYMENT
+      // =============================================
+
+      paymentMode: selectedPaymentMode,
+      paymentStatus: 'PAID',
+      paidAmount: totalAmount,
+
+      payments: [
+        {
+          mode: selectedPaymentMode,
+          amount: totalAmount,
+        },
+      ],
+
+      // =============================================
+      // DEVICE
+      // =============================================
+
+      deviceId: 'POS',
+      deviceName: 'Electron POS',
+      appVersion: '1.0',
+
+      // =============================================
+      // DATE
+      // =============================================
+
+      businessDate: new Date().toISOString().slice(0, 10),
+      currency: '₹',
+    });
+
+    // =================================================
+    // 3. CHECK BILL RESULT
+    // =================================================
+
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to create bill');
+    }
+
+    // =================================================
+    // 4. MARK KOT HISTORY
+    //
+    // Repository finds all KOT histories belonging
+    // to currentTableId. No kotHistoryId required.
+    // =================================================
+
+    const kotResult = await window.posApi.markTableHistoryPaid({
+      tableNo: currentTableId,
+      billItems: billItems,
+      orderId: result.srno || '',
+    });
+
+    if (!kotResult.success) {
+      throw new Error(kotResult.error || 'Failed to update KOT history');
+    }
+
+    // =================================================
+    // 5. RESET BILL DRAFT
+    // =================================================
+
+    setBillDraft({
+      customerName: 'Customer',
+      customerPhone: '',
+      discount: 0,
+      discountPercent: 0,
+      deliveryFee: 0,
+      paymentMode: 'CASH',
+      paidAmount: 0,
+    });
+
+    // =================================================
+    // 6. CLEAR BILL UI
+    // =================================================
+
+    setBillRows([]);
+
+    // =================================================
+    // 7. RELOAD BILL ITEMS
+    // =================================================
+
+    await loadBillItems();
+
+    // =================================================
+    // 8. SUCCESS CALLBACK
+    // =================================================
+
+    onSuccess?.();
+
+  } catch (e) {
+    console.error('BILL FAILED', e);
+
+    const message = e instanceof Error ? e.message : String(e);
+
+    setError(message || 'Payment failed');
+
+  } finally {
+    setProcessing(false);
+  }
+}
 
 
 
@@ -716,47 +950,7 @@ async function printBillItems(
   }
 
 
-  // =====================================================
-  // DELETE BILL ITEM
-  // =====================================================
 
-  // async function handleDeleteBillItem(
-  //   item: any,
-  //   reason: string,
-  //   cancelKitchen: boolean
-  // ) {
-  //   try {
-  //     setProcessing(true);
-  //     setError(null);
-
-
-
-  //     const result = await window.posApi.deleteBillItemAll({
-  //       tableNo: currentTableId,
-  //       billItemGroupKey: item.billItemGroupKey,
-  //       reason,
-  //       cancelKitchen,
-  //     });
-
-  //     if (!result?.success) {
-  //       throw new Error(
-  //         result?.error || "Failed to delete bill item"
-  //       );
-  //     }
-
-  //     await loadBillItems();
-
-  //   } catch (e) {
-  //     console.error("FAILED TO DELETE BILL ITEM:", e);
-
-  //     const message =
-  //       e instanceof Error ? e.message : String(e);
-
-  //     setError(message || "Failed to delete item");
-  //   } finally {
-  //     setProcessing(false);
-  //   }
-  // }
 
 
   // =====================================================
@@ -856,157 +1050,6 @@ async function printBillItems(
 
 
 
-  // =====================================================
-  // FINALIZE BILL
-  // =====================================================
-
- async function handleCheckout(
-  selectedPaymentMode: 'CASH' | 'CARD' | 'UPI' | 'CANCEL'
-) {
-  if (processing) return;
-
-  if (billItems.length === 0) {
-    setError('No items in bill');
-    return;
-  }
-
-  if (!currentTableId) {
-    setError('No table selected');
-    return;
-  }
-
-  try {
-    setProcessing(true);
-    setError(null);
-
-    // =================================================
-    // 1. CALCULATE FINAL TOTAL
-    // =================================================
-
-    const totalAmount = Number(calculation.grandTotal) || 0;
-
-    // =================================================
-    // 2. CREATE BILL
-    // =================================================
-
-    const result = await window.posApi.createBill({
-      tableNo: currentTableId,
-      tableName: currentTableName,
-      orderType: currentOrderType,
-
-      customerName: customerName.trim() || 'Customer',
-      customerPhone: customerPhone.trim(),
-
-      discountTotal: calculation.discount,
-      deliveryFee: calculation.deliveryFee,
-      deliveryTax: calculation.deliveryTax,
-
-      // =============================================
-      // USER SNAPSHOT
-      // =============================================
-
-      finalizedById: currentUser?.userId || '',
-      finalizedByName: currentUser?.fullName || '',
-
-      // =============================================
-      // PAYMENT
-      // =============================================
-
-      paymentMode: selectedPaymentMode,
-      paymentStatus: 'PAID',
-      paidAmount: totalAmount,
-
-      payments: [
-        {
-          mode: selectedPaymentMode,
-          amount: totalAmount,
-        },
-      ],
-
-      // =============================================
-      // DEVICE
-      // =============================================
-
-      deviceId: 'POS',
-      deviceName: 'Electron POS',
-      appVersion: '1.0',
-
-      // =============================================
-      // DATE
-      // =============================================
-
-      businessDate: new Date().toISOString().slice(0, 10),
-      currency: '₹',
-    });
-
-    // =================================================
-    // 3. CHECK BILL RESULT
-    // =================================================
-
-    if (!result.success) {
-      throw new Error(result.error || 'Failed to create bill');
-    }
-
-    // =================================================
-    // 4. MARK KOT HISTORY
-    //
-    // Repository finds all KOT histories belonging
-    // to currentTableId. No kotHistoryId required.
-    // =================================================
-
-    const kotResult = await window.posApi.markTableHistoryPaid({
-      tableNo: currentTableId,
-      billItems: billItems,
-      orderId: result.srno || '',
-    });
-
-    if (!kotResult.success) {
-      throw new Error(kotResult.error || 'Failed to update KOT history');
-    }
-
-    // =================================================
-    // 5. RESET BILL DRAFT
-    // =================================================
-
-    setBillDraft({
-      customerName: 'Customer',
-      customerPhone: '',
-      discount: 0,
-      discountPercent: 0,
-      deliveryFee: 0,
-      paymentMode: 'CASH',
-      paidAmount: 0,
-    });
-
-    // =================================================
-    // 6. CLEAR BILL UI
-    // =================================================
-
-    setBillRows([]);
-
-    // =================================================
-    // 7. RELOAD BILL ITEMS
-    // =================================================
-
-    await loadBillItems();
-
-    // =================================================
-    // 8. SUCCESS CALLBACK
-    // =================================================
-
-    onSuccess?.();
-
-  } catch (e) {
-    console.error('BILL FAILED', e);
-
-    const message = e instanceof Error ? e.message : String(e);
-
-    setError(message || 'Payment failed');
-
-  } finally {
-    setProcessing(false);
-  }
-}
 
 
   // CANCEL
@@ -1455,6 +1498,9 @@ async function printBillItems(
 
           orderType:
             currentOrderType,
+              // Send both complete calculation objects
+          calculation,
+          calculationLiquorVat,
 
           customerName:
             customerName.trim() ||
@@ -1683,6 +1729,10 @@ async function printBillItems(
 
           orderType:
             currentOrderType,
+
+              // Send both complete calculation objects
+         calculation,
+         calculationLiquorVat,
 
           customerName:
             customerName.trim() ||

@@ -19,6 +19,7 @@ async function insertProducts(list) {
       currentStock,
       productMode,
       taxRate, taxType,
+      taxRate1, taxType1,
       type,
       outletId
     ) VALUES (
@@ -33,6 +34,7 @@ async function insertProducts(list) {
       @currentStock,
       @productMode,
       @taxRate, @taxType,
+       @taxRate1, @taxType1,
       @type,
       @outletId
     )
@@ -88,7 +90,8 @@ async function insertProducts(list) {
 
         taxRate: row.taxRate ?? null,
         taxType: row.taxType ?? null,
-
+        taxRate1: row.taxRate1 ?? null,
+        taxType1: row.taxType1 ?? null,
         type: row.type ?? null,
 
         outletId: row.outletId ?? null,

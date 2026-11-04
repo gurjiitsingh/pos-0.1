@@ -47,16 +47,16 @@ class FormatterFactory {
   // BILL TEXT
   // =====================================================
 
-  static createBillFormatter(paperSize) {
+  static createBillFormatter(paperSize, taxCategory) {
 
     switch (paperSize) {
 
       case PrinterPaperSize.MM58:
-        return new BillFormatter80();
+        return new BillFormatter80(taxCategory);
 
       case PrinterPaperSize.MM80:
       default:
-        return new BillFormatter80();
+        return new BillFormatter80(taxCategory);
     }
   }
 
@@ -109,13 +109,13 @@ class FormatterFactory {
   // }
 
 
-static create(role, paperSize) {
+static create(role, paperSize, taxCategory) {
   switch (role) {
     case PrinterRole.KITCHEN:
       return this.createKitchenFormatter(paperSize);
 
     case PrinterRole.BILL:
-      return this.createBillFormatter(paperSize);
+      return this.createBillFormatter(paperSize, taxCategory);
 
     case 'REPORT':
       return new ReportFormatter(paperSize);

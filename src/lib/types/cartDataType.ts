@@ -44,6 +44,11 @@ taxCategory: string | null;
 
   taxType: 'inclusive' | 'exclusive';
 
+ taxRate1: number;
+
+  taxType1?: 'inclusive' | 'exclusive';
+
+
   // =====================================================
   // POS session
   // =====================================================

@@ -35,11 +35,11 @@ declare global {
       syncAll: () => Promise<any>;
       getTables: () => Promise<any[]>;
 
-getConfig: () => Promise<{
-  success: boolean;
-  configured?: boolean;
-  error?: string;
-}>;
+      getConfig: () => Promise<{
+        success: boolean;
+        configured?: boolean;
+        error?: string;
+      }>;
 
       // Categories
       getAllCategories: () => Promise<any[]>;
@@ -105,6 +105,9 @@ getConfig: () => Promise<{
         tableNo: string;
         tableName: string;
         orderType?: 'DINE_IN' | 'TAKEAWAY' | 'DELIVERY';
+        // Send both complete calculation objects
+        calculation: any;
+        calculationLiquorVat: any;
 
         customerName?: string;
         customerPhone?: string;
@@ -298,10 +301,12 @@ getConfig: () => Promise<{
         role: string;
         source?: 'POS' | 'WAITER' | 'SYSTEM';
         data: any;
+         taxCategory: "LIQUOR_VAT" | "FOOD_GST";
       }) => Promise<{
         success: boolean;
         jobId?: string;
         error?: string;
+       
       }>;
 
       syncAll:
@@ -316,21 +321,21 @@ getConfig: () => Promise<{
 
 
 
-  firebase: {
-  initialize: (
-    clientId: string
-  ) => Promise<{
-    success: boolean;
-    data?: any;
-    error?: string;
-  }>;
+      firebase: {
+        initialize: (
+          clientId: string
+        ) => Promise<{
+          success: boolean;
+          data?: any;
+          error?: string;
+        }>;
 
-getConfig: () => Promise<{
-  success: boolean;
-  configured?: boolean;
-  error?: string;
-}>;
-};
+        getConfig: () => Promise<{
+          success: boolean;
+          configured?: boolean;
+          error?: string;
+        }>;
+      };
 
 
       getPosIPAddress: () => Promise<{
@@ -358,60 +363,60 @@ getConfig: () => Promise<{
       // =====================================================
       getPrinterSettings: () => Promise<any[]>;
 
-  savePrinterSetting: (settings: {
-  role: string;
-  active: boolean;
-  name: string;
-  connectionType: string;
-  paperSize: string; // Keep your existing type if different
-  renderMode: string; // Keep your existing type if different
-  ip: string;
-  port: number;
-}) => Promise<{
-  success: boolean;
-  error?: string;
-}>;
+      savePrinterSetting: (settings: {
+        role: string;
+        active: boolean;
+        name: string;
+        connectionType: string;
+        paperSize: string; // Keep your existing type if different
+        renderMode: string; // Keep your existing type if different
+        ip: string;
+        port: number;
+      }) => Promise<{
+        success: boolean;
+        error?: string;
+      }>;
 
-listInstalledUsbPrinters: () => Promise<
-  {
-    name: string;
-    displayName: string;
-    status: number;
-    isDefault: boolean;
-  }[]
->;
+      listInstalledUsbPrinters: () => Promise<
+        {
+          name: string;
+          displayName: string;
+          status: number;
+          isDefault: boolean;
+        }[]
+      >;
 
-getUsbPrinterSettings: () => Promise<{
-  success: boolean;
-  error?: string;
-  data?: {
-    role: string;
-    active: boolean;
-    name: string;
-    connectionType: string;
-    paperSize: string;
-    renderMode: string;
-    ip: string;
-    port: number | null;
-    printerName?: string;
-  } | null;
-}>;
+      getUsbPrinterSettings: () => Promise<{
+        success: boolean;
+        error?: string;
+        data?: {
+          role: string;
+          active: boolean;
+          name: string;
+          connectionType: string;
+          paperSize: string;
+          renderMode: string;
+          ip: string;
+          port: number | null;
+          printerName?: string;
+        } | null;
+      }>;
 
 
-saveUsbPrinterSettings: (config: {
-  role: string;
-  active: boolean;
-  name: string;
-  connectionType: string;
-  paperSize: string;
-  renderMode: string;
-  ip: string;
-  port: number | null;
-  printerName?: string;
-}) => Promise<{
-  success: boolean;
-  error?: string;
-}>;
+      saveUsbPrinterSettings: (config: {
+        role: string;
+        active: boolean;
+        name: string;
+        connectionType: string;
+        paperSize: string;
+        renderMode: string;
+        ip: string;
+        port: number | null;
+        printerName?: string;
+      }) => Promise<{
+        success: boolean;
+        error?: string;
+      }>;
 
 
       getCurrentBusinessDay: () => Promise<any>;
@@ -724,26 +729,26 @@ saveUsbPrinterSettings: (config: {
       }>;
 
 
-moveFullTableToTable: (params: {
-  sourceTableNo: string;
-  sourceTableName: string;
-  destinationTableNo: string;
-  destinationTableName: string;
-}) => Promise<{
-  success: boolean;
-  error?: string;
-}>;
+      moveFullTableToTable: (params: {
+        sourceTableNo: string;
+        sourceTableName: string;
+        destinationTableNo: string;
+        destinationTableName: string;
+      }) => Promise<{
+        success: boolean;
+        error?: string;
+      }>;
 
-updateKitchenPrint: (data: {
-  itemId: number;
-  kitchenPrintReq: boolean; // change if nextKitchenPrint has another type
-  partition: string;
-}) => Promise<any>;
-
-
+      updateKitchenPrint: (data: {
+        itemId: number;
+        kitchenPrintReq: boolean; // change if nextKitchenPrint has another type
+        partition: string;
+      }) => Promise<any>;
 
 
-countOpenBillItems: (currentTableId: string) => Promise<number>;
+
+
+      countOpenBillItems: (currentTableId: string) => Promise<number>;
 
 
 

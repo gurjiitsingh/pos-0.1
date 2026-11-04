@@ -324,12 +324,14 @@ ipcMain.handle(
         role,
         data,
         source,
+        taxCategory,
       } = payload;
 
       const jobId = await printManager.enqueue(
         role,
         data,
-        source || 'POS'
+        source || 'POS',
+        taxCategory
       );
 
       if (role === 'BILL' && data?.tableNo) {

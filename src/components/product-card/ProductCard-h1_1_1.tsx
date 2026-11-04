@@ -45,7 +45,7 @@ export default function ProductCardHorizontical({
     activeTable,
     activeOrder,
   } = usePosSession();
-
+ 
   // =====================================================
   // CURRENT CART PARTITION
   // =====================================================
@@ -131,7 +131,7 @@ const { showToast, toastComponent } = useToast();
       ? product.discountPrice
       : product.price ?? 0;
 
-
+ 
 
   const cartProduct: cartProductType = {
 
@@ -159,6 +159,9 @@ const { showToast, toastComponent } = useToast();
 
     taxRate: product.taxRate ?? 0,
     taxType: product.taxType ?? 'exclusive',
+
+    taxRate1: product.taxRate1 ?? 0,
+    taxType1: product.taxType1 ?? 'exclusive',
 
     // POS session
     sessionId: 'DEFAULT',
